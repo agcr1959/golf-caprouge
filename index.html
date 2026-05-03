@@ -199,13 +199,16 @@ function render() {
     tr.appendChild(td0);
     DAYS.forEach(function(day) {
       var td = document.createElement('td');
-      var can = isCap || isMe;
+      var canEdit = isCap || isMe;
       var val = (weekData[name] && weekData[name][day]) || '';
       var btn = document.createElement('button');
       btn.className = 'cb' + (val==='o' ? ' oui' : val==='n' ? ' non' : '');
       btn.textContent = val==='o' ? 'O' : val==='n' ? 'N' : '.';
-      if(!can) { btn.disabled = true; }
-      else {
+      if(!canEdit) {
+        // Show data but prevent clicking - don't use disabled
+        btn.style.cursor = 'default';
+        btn.style.pointerEvents = 'none';
+      } else {
         btn.onclick = (function(n,d,b){ return function(){ toggle(n,d,b); }; })(name,day,btn);
       }
       td.appendChild(btn);
