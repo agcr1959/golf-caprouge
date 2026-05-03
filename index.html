@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amis du Golf Cap-Rouge</title>
+<style>
+body{font-family:Arial,sans-serif;background:#faf8f3;margin:0;padding:0;}
+#hdr{background:#1a4a2e;padding:20px;text-align:center;color:#c8a951;font-size:22px;}
+#login{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 70px);}
+#app{display:none;padding:20px;max-width:1100px;margin:0 auto;}
+.card{background:#fff;border-radius:12px;padding:30px;max-width:360px;width:100%;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.1);}
+.card h2{color:#1a4a2e;margin-bottom:8px;}
+.card p{color:#666;font-size:13px;margin-bottom:20px;}
+select,input{width:100%;padding:10px;margin-bottom:12px;border:1px solid #ccc;border-radius:7px;font-size:14px;font-family:Arial,sans-serif;}
+.btn{width:100%;padding:11px;background:#1a4a2e;color:#c8a951;border:none;border-radius:7px;font-size:14px;font-weight:bold;cursor:pointer;}
+.btn:hover{background:#2d7a4f;}
+#pwdrow{display:none;}
+#toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+#user-info{background:#fff;padding:8px 14px;border-radius:30px;font-size:13px;border:1px solid #ddd;}
+.tbtn{padding:7px 14px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer;font-size:13px;}
+#msg{background:#e8f5ee;border:1px solid #2d7a4f;color:#1a4a2e;padding:8px 14px;border-radius:7px;margin-bottom:14px;font-size:13px;display:none;}
+#msg.err{background:#fdf0f0;border-color:#a04040;color:#a04040;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+th{background:#1a4a2e;color:#fff;padding:9px 6px;font-size:11px;text-transform:uppercase;}
+th:first-child{text-align:left;padding-left:14px;}
+td{padding:8px 6px;border-bottom:1px solid #eee;text-align:center;font-size:13px;}
+td:first-child{text-align:left;padding-left:14px;font-weight:bold;}
+tr:nth-child(even){background:#f7fbf9;}
+tr.mine{background:#fffbe8!important;}
+tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
+.cb{width:40px;height:30px;border:1px solid #ccc;border-radius:5px;background:#f5f5f5;color:#999;font-weight:bold;cursor:pointer;font-size:13px;}
+.cb.oui{background:#2d7a4f;border-color:#2d7a4f;color:#fff;}
+.cb.non{background:#f5e8e8;border-color:#a04040;color:#a04040;}
+.cb:disabled{cursor:default;pointer-events:none;background:transparent;border-color:transparent;color:transparent;}
+#cap-panel{background:#fff;border-radius:10px;padding:16px 20px;margin-top:18px;box-shadow:0 2px 12px rgba(0,0,0,0.08);display:none;}
+#cap-panel h3{color:#1a4a2e;margin-bottom:12px;}
+.abtn{padding:8px 16px;background:#1a4a2e;color:#c8a951;border:none;border-radius:6px;font-size:13px;font-weight:bold;cursor:pointer;margin:0 8px 8px 0;}
+.abtn:hover{background:#2d7a4f;}
+.dbtn{padding:8px 16px;background:#fff;color:#a04040;border:1px solid #d9a8a8;border-radius:6px;font-size:13px;cursor:pointer;margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<div id="hdr">⛳ Amis du Golf Cap-Rouge</div>
+
+<div id="login">
+  <div class="card">
+    <h2>Bienvenue</h2>
+    <p>Sélectionnez votre nom pour indiquer vos disponibilités</p>
+    <select id="sel">
+      <option value="">— Choisissez votre nom —</option>
+      <option value="BLOUIN">BLOUIN</option>
+      <option value="BOOTH">BOOTH</option>
+      <option value="BOUCHARD">BOUCHARD</option>
+      <option value="BOUTIN">BOUTIN</option>
+      <option value="BUSSIERES">BUSSIERES</option>
+      <option value="COTE">COTE</option>
+      <option value="GUIMONT">GUIMONT</option>
+      <option value="LACHANCE">LACHANCE</option>
+      <option value="LAMB">LAMB</option>
+      <option value="LECLAIR">LECLAIR</option>
+      <option value="LEFEBVRE">LEFEBVRE</option>
+      <option value="OLIVIER">OLIVIER</option>
+      <option value="PELLETIER">PELLETIER</option>
+      <option value="PETITGREW">PETITGREW</option>
+      <option value="__CAP__">Capitaine (acces complet)</option>
+    </select>
+    <div id="pwdrow">
+      <input type="password" id="pwd" placeholder="Mot de passe capitaine">
+    </div>
+    <button class="btn" id="loginbtn">Acceder</button>
+  </div>
+</div>
+
+<div id="app">
+  <div id="toolbar">
+    <div id="user-info">👤 <span id="uname"></span></div>
+    <div>
+      <button class="tbtn" id="logoutbtn">← Changer</button>
+    </div>
+  </div>
+  <div id="msg"></div>
+  <table>
+    <thead>
+      <tr>
+        <th>NOM</th>
+        <th>LUNDI</th><th>MARDI</th><th>MERCREDI</th><th>JEUDI</th>
+        <th>VENDREDI</th><th>SAMEDI</th><th>DIMANCHE</th>
+        <th>TELEPHONE</th><th colspan="2">COURRIEL</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div id="cap-panel">
+    <h3>Panneau Capitaine</h3>
+    <button class="abtn" onclick="emailFull()">Transferer au prepose</button>
+    <button class="dbtn" onclick="clearWeek()">Effacer cette semaine</button>
+  </div>
+</div>
+
+<script>
+var URL = 'https://script.google.com/macros/s/AKfycbzoghEqwRvBcRLcFxK71shdH17oJiwN7Hqi4KRuqpOytiBK8g4DrZLVDqM1hYcT5VCx9g/exec';
+var CAP_PWD = 'caprouge2026';
+var DAYS = ['LUNDI','MARDI','MERCREDI','JEUDI','VENDREDI','SAMEDI','DIMANCHE'];
+var PREPOSE = 'departs@golfcap-rouge.qc.ca';
+
+var MEMBERS = {
+  'BLOUIN':    {tel:'418-455-3573',   email:'renblo@bell.net'},
+  'BOOTH':     {tel:'418-877-9445',   email:'davidbooth31@gmail.com'},
+  'BOUCHARD':  {tel:'(418) 952-1370', email:'s.bouchard@cartierchevrolet.com'},
+  'BOUTIN':    {tel:'(418) 656-9466', email:'pierre.boutin000@sympatico.ca'},
+  'BUSSIERES': {tel:'(418) 654-6319', email:'bussierejean@gmail.com'},
+  'COTE':      {tel:'(418) 571-2822', email:'cot4037@gmail.com'},
+  'GUIMONT':   {tel:'(418) 670-4345', email:'guimont@videotron.ca'},
+  'LACHANCE':  {tel:'(418) 653-4554', email:'kentlachance@gmail.com'},
+  'LAMB':      {tel:'(418) 575-1301', email:'alan.lamb1@outlook.com'},
+  'LECLAIR':   {tel:'(418) 653-5439', email:'ronleclair3190@gmail.com'},
+  'LEFEBVRE':  {tel:'(418) 564-5656', email:'jules.lef50@gmail.com'},
+  'OLIVIER':   {tel:'(418) 933-4939', email:'guyolivier@sympatico.ca'},
+  'PELLETIER': {tel:'(418) 928-1971', email:'pelletierpierre@videotron.ca'},
+  'PETITGREW': {tel:'(418) 572-6960', email:'charlesbpettigrew@hotmail.com'}
+};
+
+var user = null;
+var isCap = false;
+var weekKey = '';
+var weekData = {};
+
+// Week helpers
+function nextMonday() {
+  var d = new Date();
+  var day = d.getDay();
+  var diff = (day === 0) ? 1 : (8 - day);
+  d.setDate(d.getDate() + diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function toKey(d) {
+  var y = d.getFullYear();
+  var m = String(d.getMonth()+1).padStart(2,'0');
+  var dd = String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+dd;
+}
+
+// Show message
+function showMsg(text, isErr) {
+  var m = document.getElementById('msg');
+  m.textContent = text;
+  m.className = isErr ? 'err' : '';
+  m.style.display = 'block';
+  if (!isErr) setTimeout(function(){ m.style.display='none'; }, 3000);
+}
+
+// JSONP call
+function apiCall(params, ok, fail) {
+  var cb = 'cb' + Date.now() + Math.floor(Math.random()*1000);
+  var s = document.createElement('script');
+  var done = false;
+  var t = setTimeout(function(){
+    if(done) return; done=true;
+    delete window[cb];
+    if(s.parentNode) s.parentNode.removeChild(s);
+    if(fail) fail('Timeout');
+  }, 12000);
+  window[cb] = function(data){
+    if(done) return; done=true;
+    clearTimeout(t);
+    delete window[cb];
+    if(s.parentNode) s.parentNode.removeChild(s);
+    if(ok) ok(data);
+  };
+  s.onerror = function(){
+    if(done) return; done=true;
+    clearTimeout(t);
+    delete window[cb];
+    if(s.parentNode) s.parentNode.removeChild(s);
+    if(fail) fail('Script error');
+  };
+  params.callback = cb;
+  var qs = [];
+  for(var k in params) qs.push(encodeURIComponent(k)+'='+encodeURIComponent(params[k]));
+  s.src = URL + '?' + qs.join('&');
+  document.body.appendChild(s);
+}
+
+// Render table
+function render() {
+  var tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  var names = Object.keys(MEMBERS);
+  names.forEach(function(name) {
+    var tr = document.createElement('tr');
+    var isMe = !isCap && name === user;
+    if(isMe) tr.className = 'mine';
+    var td0 = document.createElement('td');
+    td0.textContent = name;
+    if(isMe) td0.style.color = '#8a6d00';
+    tr.appendChild(td0);
+    DAYS.forEach(function(day) {
+      var td = document.createElement('td');
+      var can = isCap || isMe;
+      var val = (weekData[name] && weekData[name][day]) || '';
+      var btn = document.createElement('button');
+      btn.className = 'cb' + (val==='o' ? ' oui' : val==='n' ? ' non' : '');
+      btn.textContent = val==='o' ? 'O' : val==='n' ? 'N' : '.';
+      if(!can) { btn.disabled = true; }
+      else {
+        btn.onclick = (function(n,d,b){ return function(){ toggle(n,d,b); }; })(name,day,btn);
+      }
+      td.appendChild(btn);
+      tr.appendChild(td);
+    });
+    var info = MEMBERS[name] || {};
+    var tdT = document.createElement('td');
+    tdT.textContent = info.tel || '';
+    tdT.style.fontSize = '12px';
+    tr.appendChild(tdT);
+    var tdE = document.createElement('td');
+    tdE.setAttribute('colspan','2');
+    if(info.email){
+      var a = document.createElement('a');
+      a.href = 'mailto:'+info.email;
+      a.textContent = info.email;
+      a.style.fontSize = '12px';
+      a.style.color = '#2d7a4f';
+      tdE.appendChild(a);
+    }
+    tr.appendChild(tdE);
+    tbody.appendChild(tr);
+  });
+  // Total row
+  var tr = document.createElement('tr');
+  tr.className = 'total';
+  var td = document.createElement('td'); td.textContent='TOTAL'; tr.appendChild(td);
+  DAYS.forEach(function(day){
+    var td = document.createElement('td');
+    var c = 0;
+    names.forEach(function(n){ if(weekData[n]&&weekData[n][day]==='o') c++; });
+    td.textContent = c;
+    tr.appendChild(td);
+  });
+  var tb1=document.createElement('td'); tr.appendChild(tb1);
+  var tb2=document.createElement('td'); tb2.setAttribute('colspan','2'); tr.appendChild(tb2);
+  tbody.appendChild(tr);
+}
+
+// Toggle cell
+function toggle(name, day, btn) {
+  var cur = btn.classList.contains('oui') ? 'o' : btn.classList.contains('non') ? 'n' : '';
+  var nxt = cur==='' ? 'o' : cur==='o' ? 'n' : '';
+  btn.classList.remove('oui','non');
+  if(nxt==='o'){ btn.classList.add('oui'); btn.textContent='O'; }
+  else if(nxt==='n'){ btn.classList.add('non'); btn.textContent='N'; }
+  else { btn.textContent='.'; }
+  if(!weekData[name]) weekData[name]={};
+  weekData[name][day] = nxt;
+  // Update totals
+  var totalRow = document.querySelector('tr.total');
+  if(totalRow){
+    var cells = totalRow.querySelectorAll('td');
+    var names = Object.keys(MEMBERS);
+    DAYS.forEach(function(d,i){
+      var c=0; names.forEach(function(n){ if(weekData[n]&&weekData[n][d]==='o') c++; });
+      cells[i+1].textContent = c;
+    });
+  }
+  btn.disabled = true;
+  showMsg('Sauvegarde...', false);
+  apiCall({action:'setCell', week:weekKey, member:name, day:day, value:nxt},
+    function(data){
+      btn.disabled = false;
+      if(data && data.ok) showMsg('Sauvegarde OK — week:'+weekKey, false);
+      else showMsg('Erreur: '+JSON.stringify(data), true);
+    },
+    function(err){
+      btn.disabled = false;
+      showMsg('Erreur de sauvegarde: '+err, true);
+    }
+  );
+}
+
+// Load week
+function loadWeek() {
+  showMsg('Chargement...', false);
+  apiCall({action:'getWeek', week:weekKey},
+    function(data){
+      // Show exactly what came back
+      var info = 'Week key used: "'+weekKey+'"\nRows received: ' + (data && data.rows ? data.rows.length : 0);
+      if(data && data.rows && data.rows.length > 0){
+        info += '\n\nAll rows:';
+        data.rows.forEach(function(r){
+          info += '\n member="'+r.member+'" day="'+r.day+'" value="'+r.value+'"';
+        });
+      }
+      if(data && data.error) info += '\nERROR: '+data.error;
+      alert(info);
+      document.getElementById('msg').style.display='none';
+      render();
+    },
+    function(err){ showMsg('Erreur chargement: '+err, true); render(); }
+  );
+}
+
+function clearWeek(){
+  if(!confirm('Effacer cette semaine?')) return;
+  apiCall({action:'clearWeek', week:weekKey}, function(){
+    weekData={}; render(); showMsg('Semaine effacee', false);
+  }, function(err){ showMsg('Erreur: '+err, true); });
+}
+
+function emailFull(){
+  var names = Object.keys(MEMBERS), t = 'GOLF CAP-ROUGE\nSemaine du '+weekKey+'\n\n';
+  DAYS.forEach(function(day){
+    var av = names.filter(function(n){ return weekData[n]&&weekData[n][day]==='o'; });
+    t += day+': '+(av.length?av.join(', '):'Aucun')+'\n';
+  });
+  window.location.href = 'mailto:'+PREPOSE+'?subject=Golf Cap-Rouge&body='+encodeURIComponent(t);
+}
+
+// Login
+document.getElementById('sel').onchange = function(){
+  document.getElementById('pwdrow').style.display = this.value==='__CAP__' ? 'block' : 'none';
+};
+
+document.getElementById('loginbtn').onclick = function(){
+  var v = document.getElementById('sel').value;
+  if(!v){ alert('Choisissez un nom'); return; }
+  if(v==='__CAP__'){
+    if(document.getElementById('pwd').value !== CAP_PWD){ alert('Mot de passe incorrect'); return; }
+    isCap=true; user='CAPITAINE';
+  } else { isCap=false; user=v; }
+  var mon = nextMonday();
+  weekKey = toKey(mon);
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('uname').textContent = user;
+  if(isCap) document.getElementById('cap-panel').style.display='block';
+  // Render immediately with existing weekData, then reload from Sheets
+  render();
+  loadWeek();
+};
+
+document.getElementById('logoutbtn').onclick = function(){
+  user=null; isCap=false;
+  // Keep weekData so it persists when switching users
+  document.getElementById('login').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('cap-panel').style.display='none';
+  document.getElementById('sel').value='';
+  document.getElementById('pwd').value='';
+  document.getElementById('pwdrow').style.display='none';
+};
+</script>
+</body>
+</html>
