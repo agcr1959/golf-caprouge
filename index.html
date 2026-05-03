@@ -130,11 +130,10 @@ var weekData = {};
 // Week helpers
 function nextMonday() {
   var d = new Date();
-  var day = d.getDay();
+  var day = d.getDay(); // 0=Sun, 1=Mon... 6=Sat
   var diff = (day === 0) ? 1 : (8 - day);
-  d.setDate(d.getDate() + diff);
-  d.setHours(0,0,0,0);
-  return d;
+  var result = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
+  return result;
 }
 function toKey(d) {
   var y = d.getFullYear();
@@ -186,6 +185,15 @@ function apiCall(params, ok, fail) {
 
 // Render table
 function render() {
+  // Debug: show weekData contents
+  var dbg = document.getElementById('msg');
+  var keys = Object.keys(weekData);
+  if(keys.length > 0){
+    var txt = 'weekData has: ';
+    keys.forEach(function(k){ txt += k+'('+Object.keys(weekData[k]).join(',')+') '; });
+    dbg.textContent = txt;
+    dbg.style.display = 'block';
+  }
   var tbody = document.getElementById('tbody');
   tbody.innerHTML = '';
   var names = Object.keys(MEMBERS);
@@ -270,7 +278,7 @@ function toggle(name, day, btn) {
   apiCall({action:'setCell', week:weekKey, member:name, day:day, value:nxt},
     function(data){
       btn.disabled = false;
-      if(data && data.ok) showMsg('Sauvegarde OK — week:'+weekKey, false);
+      if(data && data.ok) showMsg('Sauvegarde OK', false);
       else showMsg('Erreur: '+JSON.stringify(data), true);
     },
     function(err){
@@ -285,16 +293,13 @@ function loadWeek() {
   showMsg('Chargement...', false);
   apiCall({action:'getWeek', week:weekKey},
     function(data){
-      // Show exactly what came back
-      var info = 'Week key used: "'+weekKey+'"\nRows received: ' + (data && data.rows ? data.rows.length : 0);
       if(data && data.rows && data.rows.length > 0){
-        info += '\n\nAll rows:';
+        weekData = {};
         data.rows.forEach(function(r){
-          info += '\n member="'+r.member+'" day="'+r.day+'" value="'+r.value+'"';
+          if(!weekData[r.member]) weekData[r.member]={};
+          weekData[r.member][r.day] = r.value;
         });
       }
-      if(data && data.error) info += '\nERROR: '+data.error;
-      alert(info);
       document.getElementById('msg').style.display='none';
       render();
     },
