@@ -42,7 +42,21 @@ tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
 #cap-panel h3{color:#1a4a2e;margin-bottom:12px;}
 .abtn{padding:8px 16px;background:#1a4a2e;color:#c8a951;border:none;border-radius:6px;font-size:13px;font-weight:bold;cursor:pointer;margin:0 8px 8px 0;}
 .abtn:hover{background:#2d7a4f;}
-.dbtn{padding:8px 16px;background:#fff;color:#a04040;border:1px solid #d9a8a8;border-radius:6px;font-size:13px;cursor:pointer;margin-bottom:8px;}
+.tbtn.admin{background:#1a4a2e;color:#c8a951;border-color:#1a4a2e;margin-right:8px;}
+.tbtn.admin:hover{background:#2d7a4f;}
+.dsec{margin-bottom:24px;}
+.dh{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8aaa96;margin-bottom:12px;padding-bottom:5px;border-bottom:1px solid #c8ddd2;}
+.dr{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.dr label{font-size:13px;color:#4a6455;min-width:160px;}
+.dr input[type=text]{flex:1;margin-bottom:0;padding:7px 9px;}
+.ci{width:40px;height:28px;border:1px solid #ccc;border-radius:5px;cursor:pointer;padding:2px;flex-shrink:0;}
+.apbtn{width:100%;padding:10px;background:#1a4a2e;color:#c8a951;border:none;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer;margin-top:4px;}
+.apbtn:hover{background:#2d7a4f;}
+.pi{display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid #c8ddd2;border-radius:7px;margin-bottom:5px;background:#faf8f3;}
+.pi .pn{font-size:13px;font-weight:bold;min-width:85px;}
+.pi .pc{flex:1;font-size:11px;color:#4a6455;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pi .pd{background:none;border:none;color:#c0a0a0;cursor:pointer;font-size:15px;padding:0 3px;}
+.pi .pd:hover{color:#a04040;}
 </style>
 </head>
 <body>
@@ -87,6 +101,7 @@ tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
       <a href="mailto:departs@golfcap-rouge.qc.ca">✉ departs@golfcap-rouge.qc.ca</a>
     </div>
     <div>
+      <button class="tbtn admin" id="adminbtn" style="display:none;" onclick="openAdmin()">⚙ Paramètres</button>
       <button class="tbtn" id="logoutbtn">← Changer</button>
     </div>
   </div>
@@ -111,6 +126,58 @@ tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
     <div id="print-day-panel" style="display:none;margin-top:10px;background:#e8f5ee;border-radius:8px;padding:12px;">
       <p style="font-size:13px;color:#1a4a2e;font-weight:bold;margin-bottom:8px;">Choisir le jour à imprimer :</p>
       <div id="print-day-btns" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN DRAWER -->
+<div id="overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;" onclick="if(event.target===this)closeAdmin()">
+  <div id="drawer" style="background:#fff;width:min(460px,100vw);height:100vh;overflow-y:auto;margin-left:auto;box-shadow:-4px 0 28px rgba(0,0,0,0.2);">
+    <div style="background:#1a4a2e;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;">
+      <span style="color:#c8a951;font-size:17px;font-weight:bold;">⚙ Paramètres capitaine</span>
+      <button onclick="closeAdmin()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:22px;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:22px;">
+
+      <div class="dsec">
+        <h4 class="dh">🎨 Apparence</h4>
+        <div class="dr"><label>Titre</label><input type="text" id="d-title" placeholder="Amis du Golf Cap-Rouge"></div>
+        <div class="dr"><label>Couleur en-tête fond</label><input type="color" id="d-hbg" value="#1a4a2e" class="ci"></div>
+        <div class="dr"><label>Couleur en-tête texte</label><input type="color" id="d-htx" value="#c8a951" class="ci"></div>
+        <div class="dr"><label>Couleur bouton OUI</label><input type="color" id="d-ouibg" value="#2d7a4f" class="ci"></div>
+        <div class="dr"><label>Couleur bouton NON fond</label><input type="color" id="d-nonbg" value="#f5e8e8" class="ci"></div>
+        <div class="dr"><label>Couleur bouton NON texte</label><input type="color" id="d-nontx" value="#a04040" class="ci"></div>
+        <div class="dr"><label>Lignes alternées</label><input type="color" id="d-rowalt" value="#f7fbf9" class="ci"></div>
+        <button class="apbtn" onclick="applyApp()">✓ Appliquer</button>
+      </div>
+
+      <div class="dsec">
+        <h4 class="dh">👥 Membres</h4>
+        <ul id="plist" style="list-style:none;margin-bottom:12px;max-height:220px;overflow-y:auto;"></ul>
+        <div style="border:1.5px dashed #c8ddd2;border-radius:9px;padding:13px;background:#e8f5ee;">
+          <strong style="font-size:13px;color:#4a6455;display:block;margin-bottom:9px;">➕ Ajouter un membre</strong>
+          <input type="text" id="nn" placeholder="Nom (ex: TREMBLAY)" style="margin-bottom:7px;">
+          <input type="text" id="nt" placeholder="Téléphone" style="margin-bottom:7px;">
+          <input type="text" id="ne" placeholder="Courriel" style="margin-bottom:7px;">
+          <button class="apbtn" onclick="addPlayer()">Ajouter</button>
+          <div id="addmsg" style="font-size:12px;margin-top:5px;min-height:15px;"></div>
+        </div>
+      </div>
+
+      <div class="dsec">
+        <h4 class="dh">🔑 Mot de passe capitaine</h4>
+        <input type="password" id="pw1" placeholder="Nouveau mot de passe" style="margin-bottom:7px;">
+        <input type="password" id="pw2" placeholder="Confirmer" style="margin-bottom:7px;">
+        <button class="apbtn" onclick="changePwd()">Changer</button>
+        <div id="pwmsg" style="font-size:12px;margin-top:5px;min-height:15px;"></div>
+        <p style="font-size:11px;color:#8aaa96;margin-top:5px;">Notez votre mot de passe dans un endroit sûr.</p>
+      </div>
+
+      <div class="dsec">
+        <h4 class="dh">⚠ Réinitialisation</h4>
+        <button class="dbtn" onclick="resetAll()" style="width:100%;padding:9px;">Effacer toutes les données</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -203,7 +270,7 @@ function apiCall(params, ok, fail) {
 function render() {
   var tbody = document.getElementById('tbody');
   tbody.innerHTML = '';
-  var names = Object.keys(MEMBERS);
+  var names = Object.keys(getMembers());
   names.forEach(function(name) {
     var tr = document.createElement('tr');
     var isMe = !isCap && name === user;
@@ -229,7 +296,7 @@ function render() {
       td.appendChild(btn);
       tr.appendChild(td);
     });
-    var info = MEMBERS[name] || {};
+    var info = getMembers()[name] || {};
     var tdT = document.createElement('td');
     tdT.textContent = info.tel || '';
     tdT.style.fontSize = '12px';
@@ -419,6 +486,120 @@ function printDay(day){
   var w=window.open('','_blank'); w.document.write(html); w.document.close();
 }
 
+// Admin
+function openAdmin(){
+  var c = JSON.parse(localStorage.getItem('golf_cfg')||'{}');
+  if(c.hbg) document.getElementById('d-hbg').value=c.hbg;
+  if(c.htx) document.getElementById('d-htx').value=c.htx;
+  if(c.ouibg) document.getElementById('d-ouibg').value=c.ouibg;
+  if(c.nonbg) document.getElementById('d-nonbg').value=c.nonbg;
+  if(c.nontx) document.getElementById('d-nontx').value=c.nontx;
+  if(c.rowalt) document.getElementById('d-rowalt').value=c.rowalt;
+  if(c.title) document.getElementById('d-title').value=c.title;
+  renderPList();
+  document.getElementById('overlay').style.display='block';
+  document.getElementById('drawer').scrollTop=0;
+}
+function closeAdmin(){ document.getElementById('overlay').style.display='none'; }
+
+function applyApp(){
+  var c = JSON.parse(localStorage.getItem('golf_cfg')||'{}');
+  c.hbg=document.getElementById('d-hbg').value;
+  c.htx=document.getElementById('d-htx').value;
+  c.ouibg=document.getElementById('d-ouibg').value;
+  c.nonbg=document.getElementById('d-nonbg').value;
+  c.nontx=document.getElementById('d-nontx').value;
+  c.rowalt=document.getElementById('d-rowalt').value;
+  c.title=document.getElementById('d-title').value;
+  localStorage.setItem('golf_cfg', JSON.stringify(c));
+  applyConfig();
+  render();
+  closeAdmin();
+}
+
+function applyConfig(){
+  var c = JSON.parse(localStorage.getItem('golf_cfg')||'{}');
+  if(c.hbg){ document.getElementById('hdr').style.background=c.hbg; }
+  if(c.htx){ document.getElementById('hdr').style.color=c.htx; }
+  if(c.title){ document.getElementById('hdr').textContent='⛳ '+c.title; }
+  if(c.ouibg) document.documentElement.style.setProperty('--ouibg',c.ouibg);
+  if(c.nonbg) document.documentElement.style.setProperty('--nonbg',c.nonbg);
+  if(c.nontx) document.documentElement.style.setProperty('--nontx',c.nontx);
+  if(c.rowalt){
+    var style = document.getElementById('rowalt-style');
+    if(!style){ style=document.createElement('style'); style.id='rowalt-style'; document.head.appendChild(style); }
+    style.textContent = 'tr:nth-child(even){background:'+c.rowalt+'!important;}';
+  }
+  if(c.pwd) CAP_PWD=c.pwd;
+}
+
+function renderPList(){
+  var ul=document.getElementById('plist'); ul.innerHTML='';
+  var mbr=getMembers();
+  Object.entries(mbr).forEach(function(e){
+    var name=e[0], info=e[1];
+    var li=document.createElement('li'); li.className='pi';
+    li.innerHTML='<span class="pn">'+name+'</span><span class="pc">'+(info.tel||'')+' · '+(info.email||'')+'</span><button class="pd" onclick="removePlayer(\''+name+'\')">✕</button>';
+    ul.appendChild(li);
+  });
+}
+
+function getMembers(){
+  try{ var s=localStorage.getItem('golf_mbr'); return s?JSON.parse(s):MEMBERS; }catch(e){ return MEMBERS; }
+}
+function saveMembers(m){ localStorage.setItem('golf_mbr',JSON.stringify(m)); }
+
+function removePlayer(name){
+  if(!confirm('Supprimer '+name+' ?')) return;
+  var m=getMembers(); delete m[name]; saveMembers(m);
+  renderPList(); rebuildSelect(); render();
+}
+
+function addPlayer(){
+  var name=document.getElementById('nn').value.trim().toUpperCase();
+  var tel=document.getElementById('nt').value.trim();
+  var email=document.getElementById('ne').value.trim();
+  var msg=document.getElementById('addmsg');
+  if(!name){ msg.textContent='Veuillez entrer un nom.'; msg.style.color='#a04040'; return; }
+  var m=getMembers();
+  if(m[name]){ msg.textContent='Ce membre existe déjà.'; msg.style.color='#a04040'; return; }
+  m[name]={tel:tel,email:email}; saveMembers(m);
+  document.getElementById('nn').value=''; document.getElementById('nt').value=''; document.getElementById('ne').value='';
+  msg.textContent=name+' ajouté!'; msg.style.color='#2d7a4f';
+  setTimeout(function(){ msg.textContent=''; },3000);
+  renderPList(); rebuildSelect(); render();
+}
+
+function changePwd(){
+  var p1=document.getElementById('pw1').value, p2=document.getElementById('pw2').value;
+  var msg=document.getElementById('pwmsg');
+  if(!p1){ msg.textContent='Entrez un mot de passe.'; msg.style.color='#a04040'; return; }
+  if(p1!==p2){ msg.textContent='Les mots de passe ne correspondent pas.'; msg.style.color='#a04040'; return; }
+  CAP_PWD=p1;
+  var c=JSON.parse(localStorage.getItem('golf_cfg')||'{}'); c.pwd=p1;
+  localStorage.setItem('golf_cfg',JSON.stringify(c));
+  document.getElementById('pw1').value=''; document.getElementById('pw2').value='';
+  msg.textContent='Mot de passe changé.'; msg.style.color='#2d7a4f';
+  setTimeout(function(){ msg.textContent=''; },3000);
+}
+
+function resetAll(){
+  if(!confirm('Effacer TOUTES les données?')) return;
+  weekData={}; render(); closeAdmin();
+}
+
+function rebuildSelect(){
+  var sel=document.getElementById('sel');
+  var current=sel.value;
+  sel.innerHTML='<option value="">— Choisissez votre nom —</option>';
+  var mbr=getMembers();
+  Object.keys(mbr).forEach(function(name){
+    var o=document.createElement('option'); o.value=name; o.textContent=name; sel.appendChild(o);
+  });
+  var cap=document.createElement('option'); cap.value='__CAP__'; cap.textContent='Capitaine (acces complet)'; sel.appendChild(cap);
+  sel.value=current;
+}
+
 // Login
 document.getElementById('sel').onchange = function(){
   document.getElementById('pwdrow').style.display = this.value==='__CAP__' ? 'block' : 'none';
@@ -436,7 +617,7 @@ document.getElementById('loginbtn').onclick = function(){
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('uname').textContent = user;
-  if(isCap) document.getElementById('cap-panel').style.display='block';
+  if(isCap){ document.getElementById('cap-panel').style.display='block'; document.getElementById('adminbtn').style.display='inline-block'; }
   // Render immediately with existing weekData, then reload from Sheets
   render();
   loadWeek();
@@ -448,10 +629,14 @@ document.getElementById('logoutbtn').onclick = function(){
   document.getElementById('login').style.display='flex';
   document.getElementById('app').style.display='none';
   document.getElementById('cap-panel').style.display='none';
+  document.getElementById('adminbtn').style.display='none';
   document.getElementById('sel').value='';
   document.getElementById('pwd').value='';
   document.getElementById('pwdrow').style.display='none';
 };
+
+// Apply saved config on page load
+applyConfig();
 </script>
 </body>
 </html>
