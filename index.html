@@ -34,6 +34,10 @@ tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
 .cb.non{background:#f5e8e8;border-color:#a04040;color:#a04040;}
 .cb:disabled{cursor:default;pointer-events:none;opacity:0.7;}
 .cb:disabled:not(.oui):not(.non){background:#f0f0f0;border-color:#ddd;color:#bbb;}
+.pbar{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:8px 14px;flex-wrap:wrap;justify-content:center;}
+.pbar span{font-size:12px;font-weight:bold;color:#1a4a2e;}
+.pbar a{font-size:12px;color:#2d7a4f;text-decoration:none;}
+.pbar a:hover{text-decoration:underline;}
 #cap-panel{background:#fff;border-radius:10px;padding:16px 20px;margin-top:18px;box-shadow:0 2px 12px rgba(0,0,0,0.08);display:none;}
 #cap-panel h3{color:#1a4a2e;margin-bottom:12px;}
 .abtn{padding:8px 16px;background:#1a4a2e;color:#c8a951;border:none;border-radius:6px;font-size:13px;font-weight:bold;cursor:pointer;margin:0 8px 8px 0;}
@@ -77,6 +81,11 @@ tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
 <div id="app">
   <div id="toolbar">
     <div id="user-info">👤 <span id="uname"></span></div>
+    <div class="pbar">
+      <span>⛳ Préposé aux départs</span>
+      <a href="tel:4186594871">📞 418 659-4871</a>
+      <a href="mailto:departs@golfcap-rouge.qc.ca">✉ departs@golfcap-rouge.qc.ca</a>
+    </div>
     <div>
       <button class="tbtn" id="logoutbtn">← Changer</button>
     </div>
@@ -95,8 +104,14 @@ tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
   </table>
   <div id="cap-panel">
     <h3>Panneau Capitaine</h3>
-    <button class="abtn" onclick="emailFull()">Transferer au prepose</button>
+    <button class="abtn" onclick="emailFull()">📧 Transférer au préposé</button>
+    <button class="abtn" onclick="printFull()">🖨️ Imprimer tableau complet</button>
+    <button class="abtn" onclick="togglePrintDay()">📅 Imprimer un jour</button>
     <button class="dbtn" onclick="clearWeek()">Effacer cette semaine</button>
+    <div id="print-day-panel" style="display:none;margin-top:10px;background:#e8f5ee;border-radius:8px;padding:12px;">
+      <p style="font-size:13px;color:#1a4a2e;font-weight:bold;margin-bottom:8px;">Choisir le jour à imprimer :</p>
+      <div id="print-day-btns" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
+    </div>
   </div>
 </div>
 
@@ -316,6 +331,92 @@ function emailFull(){
     t += day+': '+(av.length?av.join(', '):'Aucun')+'\n';
   });
   window.location.href = 'mailto:'+PREPOSE+'?subject=Golf Cap-Rouge&body='+encodeURIComponent(t);
+}
+
+function togglePrintDay(){
+  var p = document.getElementById('print-day-panel');
+  p.style.display = p.style.display==='block' ? 'none' : 'block';
+  var btns = document.getElementById('print-day-btns');
+  if(btns.innerHTML !== '') return;
+  DAYS.forEach(function(day){
+    var b = document.createElement('button');
+    b.className = 'abtn'; b.textContent = day;
+    b.style.cssText = 'padding:6px 12px;font-size:12px;margin:0;';
+    b.onclick = function(){ printDay(day); };
+    btns.appendChild(b);
+  });
+}
+
+function printFull(){
+  var names = Object.keys(MEMBERS), title = 'AMIS DU GOLF CAP-ROUGE', wl = weekKey;
+  var rows = '';
+  names.forEach(function(name, i){
+    var bg = i%2===1 ? '#f7fbf9' : '#fff';
+    var cells = '';
+    DAYS.forEach(function(day){
+      var v = (weekData[name]&&weekData[name][day])||'';
+      var cbg = v==='o'?'#2d7a4f':v==='n'?'#f5e8e8':'#fff';
+      var ctx = v==='o'?'#fff':v==='n'?'#a04040':'#ccc';
+      cells += '<td style="text-align:center;padding:6px 4px;border:1px solid #ddd;background:'+cbg+';color:'+ctx+';font-weight:bold;">'+(v==='o'?'O':v==='n'?'N':'.')+'</td>';
+    });
+    var info = MEMBERS[name]||{};
+    rows += '<tr style="background:'+bg+';"><td style="padding:6px 10px;border:1px solid #ddd;font-weight:bold;">'+name+'</td>'+cells+'<td style="padding:6px 8px;border:1px solid #ddd;font-size:11px;color:#555;">'+(info.tel||'')+'</td><td style="padding:6px 8px;border:1px solid #ddd;font-size:11px;color:#2d7a4f;">'+(info.email||'')+'</td></tr>';
+  });
+  var tots = '';
+  DAYS.forEach(function(day){
+    var c = names.filter(function(n){ return weekData[n]&&weekData[n][day]==='o'; }).length;
+    tots += '<td style="text-align:center;padding:6px 4px;font-weight:bold;color:#fff;border:1px solid rgba(255,255,255,0.2);">'+c+'</td>';
+  });
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+title+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;margin:20px;}table{border-collapse:collapse;width:100%;font-size:13px;}@media print{body{margin:8px;}}</style></head><body>'
+    +'<h2 style="color:#1a4a2e;margin-bottom:4px;">'+title+'</h2>'
+    +'<p style="font-size:13px;color:#555;margin-bottom:14px;">Semaine du '+wl+' · Préposé aux départs</p>'
+    +'<table><thead>'
+    +'<tr><th style="background:#1a4a2e;color:#fff;padding:8px 10px;text-align:left;border:1px solid rgba(255,255,255,0.1);">NOM</th>'
+    +DAYS.map(function(d){ return '<th style="background:#1a4a2e;color:#fff;padding:8px 5px;text-align:center;border:1px solid rgba(255,255,255,0.1);">'+d+'</th>'; }).join('')
+    +'<th style="background:#1a4a2e;color:#fff;padding:8px;border:1px solid rgba(255,255,255,0.1);">TÉLÉPHONE</th>'
+    +'<th style="background:#1a4a2e;color:#fff;padding:8px;border:1px solid rgba(255,255,255,0.1);">COURRIEL</th></tr>'
+    +'</thead><tbody>'+rows
+    +'<tr style="background:#1a4a2e;"><td style="padding:8px 10px;font-weight:bold;color:#fff;border:1px solid rgba(255,255,255,0.1);">TOTAL</td>'+tots
+    +'<td style="border:1px solid rgba(255,255,255,0.1);" colspan="2"></td></tr>'
+    +'</tbody></table>'
+    +'<p style="font-size:11px;color:#aaa;margin-top:14px;">Imprimé le '+new Date().toLocaleDateString('fr-CA')+'</p>'
+    +'<script>window.onload=function(){window.print();};<\/script></body></html>';
+  var w = window.open('','_blank'); w.document.write(html); w.document.close();
+}
+
+function printDay(day){
+  var names = Object.keys(MEMBERS), title = 'AMIS DU GOLF CAP-ROUGE';
+  var av = names.filter(function(n){ return weekData[n]&&weekData[n][day]==='o'; });
+  var na = names.filter(function(n){ return weekData[n]&&weekData[n][day]==='n'; });
+  var nr = names.filter(function(n){ return !weekData[n]||!weekData[n][day]; });
+  var rows = '';
+  names.forEach(function(name,i){
+    var v=(weekData[name]&&weekData[name][day])||'', bg=i%2===1?'#f7fbf9':'#fff';
+    var cbg=v==='o'?'#2d7a4f':v==='n'?'#f5e8e8':'#fff', ctx=v==='o'?'#fff':v==='n'?'#a04040':'#ccc';
+    var info=MEMBERS[name]||{};
+    rows+='<tr style="background:'+bg+';"><td style="padding:7px 11px;border:1px solid #ddd;font-weight:bold;">'+name+'</td>'
+      +'<td style="text-align:center;padding:7px;border:1px solid #ddd;background:'+cbg+';color:'+ctx+';font-weight:bold;font-size:15px;">'+(v==='o'?'O':v==='n'?'N':'.')+'</td>'
+      +'<td style="padding:7px 10px;border:1px solid #ddd;font-size:12px;color:#555;">'+(info.tel||'')+'</td>'
+      +'<td style="padding:7px 10px;border:1px solid #ddd;font-size:12px;color:#2d7a4f;">'+(info.email||'')+'</td></tr>';
+  });
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+day+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;margin:22px;}.sum{background:#e8f5ee;border-left:4px solid #2d7a4f;padding:9px 14px;margin-bottom:16px;border-radius:5px;font-size:13px;}table{border-collapse:collapse;width:100%;font-size:13px;}@media print{body{margin:10px;}}</style></head><body>'
+    +'<h2 style="color:#1a4a2e;margin-bottom:3px;">'+title+'</h2>'
+    +'<p style="font-size:13px;color:#555;margin-bottom:8px;">Préposé aux départs · Semaine du '+weekKey+'</p>'
+    +'<div class="sum"><strong style="font-size:14px;">'+day+'</strong><br>'
+    +'✅ Disponibles ('+av.length+') : '+(av.length?av.join(', '):'Aucun')+'<br>'
+    +'❌ Non disponibles ('+na.length+') : '+(na.length?na.join(', '):'Aucun')+'<br>'
+    +'⏳ Sans réponse ('+nr.length+') : '+(nr.length?nr.join(', '):'Aucun')+'</div>'
+    +'<table><thead><tr>'
+    +'<th style="background:#1a4a2e;color:#fff;padding:8px 11px;text-align:left;border:1px solid rgba(255,255,255,0.1);">NOM</th>'
+    +'<th style="background:#1a4a2e;color:#fff;padding:8px;text-align:center;border:1px solid rgba(255,255,255,0.1);">'+day+'</th>'
+    +'<th style="background:#1a4a2e;color:#fff;padding:8px;border:1px solid rgba(255,255,255,0.1);">TÉLÉPHONE</th>'
+    +'<th style="background:#1a4a2e;color:#fff;padding:8px;border:1px solid rgba(255,255,255,0.1);">COURRIEL</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>'
+    +'<p style="font-size:11px;color:#aaa;margin-top:13px;">Imprimé le '+new Date().toLocaleDateString('fr-CA')+'</p>'
+    +'<script>window.onload=function(){window.print();};<\/script></body></html>';
+  var w=window.open('','_blank'); w.document.write(html); w.document.close();
 }
 
 // Login
