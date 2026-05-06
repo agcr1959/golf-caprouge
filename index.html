@@ -108,6 +108,12 @@ tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
     </div>
   </div>
   <div id="msg"></div>
+  <div id="week-bar" style="display:none;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <span style="font-size:13px;color:#4a6455;font-weight:500;">Semaine :</span>
+    <button id="btn-this-week" onclick="selectWeek('this')" style="padding:7px 16px;border-radius:7px;border:1.5px solid #2d7a4f;background:#2d7a4f;color:#fff;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;">Cette semaine</button>
+    <button id="btn-next-week" onclick="selectWeek('next')" style="padding:7px 16px;border-radius:7px;border:1.5px solid #c8ddd2;background:#fff;color:#4a6455;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;">Semaine prochaine</button>
+    <span id="week-label" style="font-size:12px;color:#8aaa96;font-style:italic;margin-left:4px;"></span>
+  </div>
   <table>
     <thead>
       <tr>
@@ -212,21 +218,53 @@ var isCap = false;
 var weekKey = '';
 var weekData = {};
 
-// Week helpers - returns the Monday of the current or next week
-function nextMonday() {
+// Week helpers
+function getMondayOfCurrentWeek() {
   var d = new Date();
-  var day = d.getDay(); // 0=Sun, 1=Mon... 6=Sat
-  var diff;
-  if(day === 1) diff = 0;      // Today is Monday — use today
-  else if(day === 0) diff = 1; // Sunday — next day is Monday
-  else diff = 8 - day;         // Any other day — next Monday
+  var day = d.getDay();
+  var diff = day === 0 ? -6 : 1 - day; // Go back to Monday
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
+}
+
+function getMondayOfNextWeek() {
+  var mon = getMondayOfCurrentWeek();
+  return new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 7);
+}
+
+function getDefaultWeek() {
+  // Mon-Wed: default to current week
+  // Thu-Sun: default to next week
+  var day = new Date().getDay();
+  if(day >= 4 || day === 0) return getMondayOfNextWeek();
+  return getMondayOfCurrentWeek();
 }
 function toKey(d) {
   var y = d.getFullYear();
   var m = String(d.getMonth()+1).padStart(2,'0');
   var dd = String(d.getDate()).padStart(2,'0');
   return y+'-'+m+'-'+dd;
+}
+
+function frLabel(d){
+  var sun = new Date(d.getFullYear(), d.getMonth(), d.getDate()+6);
+  var o = {day:'numeric', month:'long'};
+  return d.toLocaleDateString('fr-CA',o)+' au '+sun.toLocaleDateString('fr-CA',o);
+}
+
+function selectWeek(which){
+  var mon = which==='this' ? getMondayOfCurrentWeek() : getMondayOfNextWeek();
+  weekKey = toKey(mon);
+  var btnThis = document.getElementById('btn-this-week');
+  var btnNext = document.getElementById('btn-next-week');
+  btnThis.style.background = which==='this' ? '#2d7a4f' : '#fff';
+  btnThis.style.color = which==='this' ? '#fff' : '#4a6455';
+  btnThis.style.borderColor = which==='this' ? '#2d7a4f' : '#c8ddd2';
+  btnNext.style.background = which==='next' ? '#2d7a4f' : '#fff';
+  btnNext.style.color = which==='next' ? '#fff' : '#4a6455';
+  btnNext.style.borderColor = which==='next' ? '#2d7a4f' : '#c8ddd2';
+  document.getElementById('week-label').textContent = frLabel(mon);
+  weekData = {};
+  loadWeek();
 }
 
 // Show message — bar is always visible, only text and colour change
@@ -675,12 +713,30 @@ document.getElementById('loginbtn').onclick = function(){
     if(document.getElementById('pwd').value !== CAP_PWD){ alert('Mot de passe incorrect'); return; }
     isCap=true; user='CAPITAINE';
   } else { isCap=false; user=v; }
-  var mon = nextMonday();
+
+  // Smart default: Mon-Wed = this week, Thu-Sun = next week
+  var defaultDay = new Date().getDay();
+  var defaultWhich = (defaultDay >= 4 || defaultDay === 0) ? 'next' : 'this';
+  var mon = getDefaultWeek();
   weekKey = toKey(mon);
+
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('uname').textContent = user;
   document.getElementById('msg').textContent = 'Prêt';
+  document.getElementById('week-bar').style.display='flex';
+
+  // Set week buttons to reflect default
+  var btnThis = document.getElementById('btn-this-week');
+  var btnNext = document.getElementById('btn-next-week');
+  btnThis.style.background = defaultWhich==='this' ? '#2d7a4f' : '#fff';
+  btnThis.style.color = defaultWhich==='this' ? '#fff' : '#4a6455';
+  btnThis.style.borderColor = defaultWhich==='this' ? '#2d7a4f' : '#c8ddd2';
+  btnNext.style.background = defaultWhich==='next' ? '#2d7a4f' : '#fff';
+  btnNext.style.color = defaultWhich==='next' ? '#fff' : '#4a6455';
+  btnNext.style.borderColor = defaultWhich==='next' ? '#2d7a4f' : '#c8ddd2';
+  document.getElementById('week-label').textContent = frLabel(mon);
+
   if(isCap){ document.getElementById('cap-panel').style.display='block'; document.getElementById('adminbtn').style.display='inline-block'; }
   // Load members from Sheets first so all devices stay in sync
   loadMembersFromSheet(function(){
@@ -697,6 +753,7 @@ document.getElementById('logoutbtn').onclick = function(){
   document.getElementById('app').style.display='none';
   document.getElementById('cap-panel').style.display='none';
   document.getElementById('adminbtn').style.display='none';
+  document.getElementById('week-bar').style.display='none';
   document.getElementById('sel').value='';
   document.getElementById('pwd').value='';
   document.getElementById('pwdrow').style.display='none';
