@@ -390,7 +390,7 @@ function toggle(name, day, btn) {
   var totalRow = document.querySelector('tr.total');
   if(totalRow){
     var cells = totalRow.querySelectorAll('td');
-    var names = Object.keys(MEMBERS);
+    var names = Object.keys(getMembers());
     DAYS.forEach(function(d,i){
       var c=0; names.forEach(function(n){ if(weekData[n]&&weekData[n][d]==='o') c++; });
       cells[i+1].textContent = c;
@@ -438,7 +438,7 @@ function clearWeek(){
 }
 
 function emailFull(){
-  var names = Object.keys(MEMBERS), t = 'GOLF CAP-ROUGE\nSemaine du '+weekKey+'\n\n';
+  var names = Object.keys(getMembers()), t = 'GOLF CAP-ROUGE\nSemaine du '+weekKey+'\n\n';
   DAYS.forEach(function(day){
     var av = names.filter(function(n){ return weekData[n]&&weekData[n][day]==='o'; });
     t += day+': '+(av.length?av.join(', '):'Aucun')+'\n';
@@ -461,7 +461,7 @@ function togglePrintDay(){
 }
 
 function printFull(){
-  var names = Object.keys(MEMBERS), title = 'AMIS DU GOLF CAP-ROUGE', wl = weekKey;
+  var names = Object.keys(getMembers()), title = 'AMIS DU GOLF CAP-ROUGE', wl = weekKey;
   var rows = '';
   names.forEach(function(name, i){
     var bg = i%2===1 ? '#f7fbf9' : '#fff';
@@ -472,7 +472,7 @@ function printFull(){
       var ctx = v==='o'?'#fff':v==='n'?'#a04040':'#ccc';
       cells += '<td style="text-align:center;padding:6px 4px;border:1px solid #ddd;background:'+cbg+';color:'+ctx+';font-weight:bold;font-size:15px;">'+(v==='o'?'O':v==='n'?'N':'')+'</td>';
     });
-    var info = MEMBERS[name]||{};
+    var info = getMembers()[name]||{};
     rows += '<tr style="background:'+bg+';"><td style="padding:6px 10px;border:1px solid #ddd;font-weight:bold;">'+name+'</td>'+cells+'<td style="padding:6px 8px;border:1px solid #ddd;font-size:11px;color:#555;">'+(info.tel||'')+'</td><td style="padding:6px 8px;border:1px solid #ddd;font-size:11px;color:#2d7a4f;">'+(info.email||'')+'</td></tr>';
   });
   var tots = '';
@@ -501,7 +501,7 @@ function printFull(){
 }
 
 function printDay(day){
-  var names = Object.keys(MEMBERS), title = 'AMIS DU GOLF CAP-ROUGE';
+  var names = Object.keys(getMembers()), title = 'AMIS DU GOLF CAP-ROUGE';
   var av = names.filter(function(n){ return weekData[n]&&weekData[n][day]==='o'; });
   var na = names.filter(function(n){ return weekData[n]&&weekData[n][day]==='n'; });
   var nr = names.filter(function(n){ return !weekData[n]||!weekData[n][day]; });
@@ -509,7 +509,7 @@ function printDay(day){
   names.forEach(function(name,i){
     var v=(weekData[name]&&weekData[name][day])||'', bg=i%2===1?'#f7fbf9':'#fff';
     var cbg=v==='o'?'#2d7a4f':v==='n'?'#f5e8e8':'#fff', ctx=v==='o'?'#fff':v==='n'?'#a04040':'#ccc';
-    var info=MEMBERS[name]||{};
+    var info=getMembers()[name]||{};
     rows+='<tr style="background:'+bg+';"><td style="padding:7px 11px;border:1px solid #ddd;font-weight:bold;">'+name+'</td>'
       +'<td style="text-align:center;padding:7px;border:1px solid #ddd;background:'+cbg+';color:'+ctx+';font-weight:bold;font-size:15px;">'+(v==='o'?'O':v==='n'?'N':'.')+'</td>'
       +'<td style="padding:7px 10px;border:1px solid #ddd;font-size:12px;color:#555;">'+(info.tel||'')+'</td>'
@@ -766,3 +766,4 @@ applyConfig();
 </script>
 </body>
 </html>
+
