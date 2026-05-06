@@ -19,8 +19,10 @@ select,input{width:100%;padding:10px;margin-bottom:12px;border:1px solid #ccc;bo
 #toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
 #user-info{background:#fff;padding:8px 14px;border-radius:30px;font-size:13px;border:1px solid #ddd;}
 .tbtn{padding:7px 14px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer;font-size:13px;}
-#msg{background:#e8f5ee;border:1px solid #2d7a4f;color:#1a4a2e;padding:8px 14px;border-radius:7px;margin-bottom:14px;font-size:13px;display:none;}
+#msg{background:#f0f7f4;border:1px solid #c8ddd2;color:#4a6455;padding:8px 14px;border-radius:7px;margin-bottom:12px;font-size:13px;min-height:36px;display:block;transition:background 0.3s,color 0.3s;}
+#msg.ok{background:#e8f5ee;border-color:#2d7a4f;color:#0f6e56;}
 #msg.err{background:#fdf0f0;border-color:#a04040;color:#a04040;}
+#msg.saving{background:#fff8e1;border-color:#f0d060;color:#7a5d00;}
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
 th{background:#1a4a2e;color:#fff;padding:9px 6px;font-size:11px;text-transform:uppercase;}
 th:first-child{text-align:left;padding-left:14px;}
@@ -227,13 +229,17 @@ function toKey(d) {
   return y+'-'+m+'-'+dd;
 }
 
-// Show message
+// Show message — bar is always visible, only text and colour change
 function showMsg(text, isErr) {
   var m = document.getElementById('msg');
   m.textContent = text;
-  m.className = isErr ? 'err' : '';
-  m.style.display = 'block';
-  if (!isErr) setTimeout(function(){ m.style.display='none'; }, 3000);
+  m.className = isErr ? 'err' : (text === 'Chargement...' ? 'saving' : 'ok');
+  if(!isErr && text !== 'Chargement...'){
+    setTimeout(function(){
+      m.textContent = 'Prêt';
+      m.className = '';
+    }, 3000);
+  }
 }
 
 // JSONP call
@@ -379,7 +385,7 @@ function loadWeek() {
           weekData[r.member][r.day] = r.value;
         });
       }
-      document.getElementById('msg').style.display='none';
+      document.getElementById('msg').textContent='Prêt'; document.getElementById('msg').className='';
       render();
     },
     function(err){ showMsg('Erreur chargement: '+err, true); render(); }
@@ -674,6 +680,7 @@ document.getElementById('loginbtn').onclick = function(){
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('uname').textContent = user;
+  document.getElementById('msg').textContent = 'Prêt';
   if(isCap){ document.getElementById('cap-panel').style.display='block'; document.getElementById('adminbtn').style.display='inline-block'; }
   // Load members from Sheets first so all devices stay in sync
   loadMembersFromSheet(function(){
@@ -700,3 +707,4 @@ applyConfig();
 </script>
 </body>
 </html>
+
