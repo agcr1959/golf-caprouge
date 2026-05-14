@@ -69,28 +69,13 @@ tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
   <div class="card">
     <h2>Bienvenue</h2>
     <p>Sélectionnez votre nom pour indiquer vos disponibilités</p>
-    <select id="sel">
-      <option value="">— Choisissez votre nom —</option>
-      <option value="BLOUIN">BLOUIN</option>
-      <option value="BOOTH">BOOTH</option>
-      <option value="BOUCHARD">BOUCHARD</option>
-      <option value="BOUTIN">BOUTIN</option>
-      <option value="BUSSIERES">BUSSIERES</option>
-      <option value="COTE">COTE</option>
-      <option value="GUIMONT">GUIMONT</option>
-      <option value="LACHANCE">LACHANCE</option>
-      <option value="LAMB">LAMB</option>
-      <option value="LECLAIR">LECLAIR</option>
-      <option value="LEFEBVRE">LEFEBVRE</option>
-      <option value="OLIVIER">OLIVIER</option>
-      <option value="PELLETIER">PELLETIER</option>
-      <option value="PETITGREW">PETITGREW</option>
-      <option value="__CAP__">Capitaine (acces complet)</option>
+    <select id="sel" disabled>
+      <option value="">Chargement des membres...</option>
     </select>
     <div id="pwdrow">
       <input type="password" id="pwd" placeholder="Mot de passe capitaine">
     </div>
-    <button class="btn" id="loginbtn">Acceder</button>
+    <button class="btn" id="loginbtn" disabled>Acceder</button>
   </div>
 </div>
 
@@ -763,6 +748,8 @@ function rebuildSelect(){
   });
   var cap=document.createElement('option'); cap.value='__CAP__'; cap.textContent='Capitaine (acces complet)'; sel.appendChild(cap);
   sel.value=current;
+  sel.disabled=false;
+  document.getElementById('loginbtn').disabled=false;
 }
 
 // Login
@@ -844,3 +831,4 @@ applyConfig();
 </script>
 </body>
 </html>
+
