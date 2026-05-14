@@ -664,10 +664,18 @@ function sortMembers(m){
 }
 
 function getMembers(){
+  // Always prefer localStorage which gets updated from Sheets on load
+  // Fall back to hardcoded MEMBERS only if nothing in localStorage
   try{
-    var s=localStorage.getItem('golf_mbr');
-    return s ? sortMembers(JSON.parse(s)) : sortMembers(MEMBERS);
-  }catch(e){ return sortMembers(MEMBERS); }
+    var s = localStorage.getItem('golf_mbr');
+    if(s){
+      var parsed = JSON.parse(s);
+      if(parsed && Object.keys(parsed).length >= Object.keys(MEMBERS).length){
+        return sortMembers(parsed);
+      }
+    }
+  }catch(e){}
+  return sortMembers(MEMBERS);
 }
 
 function saveMembers(m){
@@ -762,12 +770,21 @@ document.getElementById('sel').onchange = function(){
   document.getElementById('pwdrow').style.display = this.value==='__CAP__' ? 'block' : 'none';
 };
 
-// Load members from Sheets immediately on page load to populate login dropdown
-setTimeout(function(){
-  loadMembersFromSheet(function(){
-    rebuildSelect();
-  });
-}, 500);
+// Rebuild dropdown when user clicks/taps it so latest members always show
+document.getElementById('sel').addEventListener('mousedown', function(){
+  loadMembersFromSheet(function(){ rebuildSelect(); });
+});
+document.getElementById('sel').addEventListener('touchstart', function(){
+  loadMembersFromSheet(function(){ rebuildSelect(); });
+});
+
+// Always clear cached members on page load to force fresh fetch from Google Sheets
+localStorage.removeItem('golf_mbr');
+
+// Load members from Sheets immediately
+loadMembersFromSheet(function(){
+  rebuildSelect();
+});
 
 document.getElementById('loginbtn').onclick = function(){
   var v = document.getElementById('sel').value;
