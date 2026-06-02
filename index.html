@@ -23,8 +23,8 @@ select,input{width:100%;padding:10px;margin-bottom:12px;border:1px solid #ccc;bo
 #msg.ok{background:#e8f5ee;border-color:#2d7a4f;color:#0f6e56;}
 #msg.err{background:#fdf0f0;border-color:#a04040;color:#a04040;}
 #msg.saving{background:#fff8e1;border-color:#f0d060;color:#7a5d00;}
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
-th{background:#1a4a2e;color:#fff;padding:9px 6px;font-size:11px;text-transform:uppercase;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+th{background:#1a4a2e;color:#fff;padding:9px 6px;font-size:11px;text-transform:uppercase;position:sticky;top:0;z-index:10;}
 th:first-child{text-align:left;padding-left:14px;}
 td{padding:8px 6px;border-bottom:1px solid #eee;text-align:center;font-size:13px;}
 td:first-child{text-align:left;padding-left:14px;font-weight:bold;}
@@ -768,8 +768,19 @@ document.getElementById('sel').addEventListener('touchstart', function(){
 // Always clear cached members on page load to force fresh fetch from Google Sheets
 localStorage.removeItem('golf_mbr');
 
-// Load members from Sheets immediately
-loadMembersFromSheet(function(){
+// Load members silently on page load - no error messages before login
+apiCall({action:'getMembers'}, function(data){
+  if(data && data.members && data.members !== 'null' && data.members !== ''){
+    try{
+      var m = JSON.parse(data.members);
+      if(m && Object.keys(m).length > 0){
+        localStorage.setItem('golf_mbr', JSON.stringify(sortMembers(m)));
+      }
+    }catch(e){}
+  }
+  rebuildSelect();
+}, function(){
+  // Silent fail on page load — just use hardcoded members
   rebuildSelect();
 });
 
@@ -831,5 +842,3 @@ applyConfig();
 </script>
 </body>
 </html>
-
-
