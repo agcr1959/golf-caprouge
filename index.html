@@ -437,14 +437,14 @@ function toggle(name, day, btn) {
   }
   btn.disabled = true;
   showMsg('Sauvegarde...', false);
+  // Re-enable immediately so user can keep clicking without waiting
+  setTimeout(function(){ btn.disabled = false; }, 300);
   apiCall({action:'setCell', week:weekKey, member:name, day:day, value:nxt},
     function(data){
-      btn.disabled = false;
       if(data && data.ok) showMsg('Sauvegarde OK', false);
       else showMsg('Erreur: '+JSON.stringify(data), true);
     },
     function(err){
-      btn.disabled = false;
       showMsg('Erreur de sauvegarde: '+err, true);
     }
   );
