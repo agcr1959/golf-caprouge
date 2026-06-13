@@ -792,10 +792,9 @@ document.getElementById('loginbtn').onclick = function(){
     isCap=true; user='CAPITAINE';
   } else { isCap=false; user=v; }
 
-  // Smart default: Mon-Wed = this week, Thu-Sun = next week
-  var defaultDay = new Date().getDay();
-  var defaultWhich = (defaultDay >= 4 || defaultDay === 0) ? 'next' : 'this';
-  var mon = getDefaultWeek();
+  // Always default to the current week, whatever day we log in
+  var defaultWhich = 'this';
+  var mon = getMondayOfCurrentWeek();
   weekKey = toKey(mon);
 
   document.getElementById('login').style.display='none';
