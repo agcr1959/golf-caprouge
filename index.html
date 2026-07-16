@@ -98,7 +98,6 @@ tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
     <button id="btn-this-week" onclick="selectWeek('this')" style="padding:7px 16px;border-radius:7px;border:1.5px solid #2d7a4f;background:#2d7a4f;color:#fff;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;">Cette semaine</button>
     <button id="btn-next-week" onclick="selectWeek('next')" style="padding:7px 16px;border-radius:7px;border:1.5px solid #c8ddd2;background:#fff;color:#4a6455;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;">Semaine prochaine</button>
     <span id="week-label" style="font-size:12px;color:#8aaa96;font-style:italic;margin-left:4px;"></span>
-    <span style="font-size:10px;color:#cfcfcf;margin-left:auto;">maj-v2</span>
   </div>
   <table>
     <thead>
@@ -436,17 +435,51 @@ function toggle(name, day, btn) {
       cells[i+1].textContent = c;
     });
   }
-  btn.disabled = true;
+  // Schedule the save (debounced per cell — see queueSave below)
+  queueSave(name, day, nxt);
+}
+
+// ── SAVE QUEUE ──
+// Prevents race conditions: only the final value of a cell is sent to Sheets,
+// and never two overlapping requests for the same cell.
+var saveTimers = {};
+var saveInFlight = {};
+var savePending = {};
+
+function queueSave(name, day, value) {
+  var key = name + '|' + day;
+  savePending[key] = value;
   showMsg('Sauvegarde...', false);
-  // Re-enable immediately so user can keep clicking without waiting
-  setTimeout(function(){ btn.disabled = false; }, 300);
-  apiCall({action:'setCell', week:weekKey, member:name, day:day, value:nxt},
+
+  if (saveTimers[key]) clearTimeout(saveTimers[key]);
+  saveTimers[key] = setTimeout(function(){
+    flushSave(key, name, day);
+  }, 600);
+}
+
+function flushSave(key, name, day) {
+  // If a request for this cell is still running, wait and retry shortly
+  if (saveInFlight[key]) {
+    saveTimers[key] = setTimeout(function(){ flushSave(key, name, day); }, 300);
+    return;
+  }
+  if (!(key in savePending)) return;
+
+  var value = savePending[key];
+  delete savePending[key];
+  saveInFlight[key] = true;
+
+  apiCall({action:'setCell', week:weekKey, member:name, day:day, value:value},
     function(data){
-      if(data && data.ok) showMsg('Sauvegarde OK', false);
-      else showMsg('Erreur: '+JSON.stringify(data), true);
+      saveInFlight[key] = false;
+      if (data && data.ok) showMsg('Sauvegarde OK', false);
+      else showMsg('Erreur: ' + JSON.stringify(data), true);
+      // If the user clicked again while this was in flight, send the newer value
+      if (key in savePending) flushSave(key, name, day);
     },
     function(err){
-      showMsg('Erreur de sauvegarde: '+err, true);
+      saveInFlight[key] = false;
+      showMsg('Erreur de sauvegarde: ' + err, true);
     }
   );
 }
@@ -793,9 +826,10 @@ document.getElementById('loginbtn').onclick = function(){
     isCap=true; user='CAPITAINE';
   } else { isCap=false; user=v; }
 
-  // Always default to the current week, whatever day we log in
-  var defaultWhich = 'this';
-  var mon = getMondayOfCurrentWeek();
+  // Smart default: Mon-Wed = this week, Thu-Sun = next week
+  var defaultDay = new Date().getDay();
+  var defaultWhich = (defaultDay >= 4 || defaultDay === 0) ? 'next' : 'this';
+  var mon = getDefaultWeek();
   weekKey = toKey(mon);
 
   document.getElementById('login').style.display='none';
