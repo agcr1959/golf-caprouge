@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Déjeuner — Amis du Golf Cap-Rouge</title>
+<style>
+*{box-sizing:border-box;}
+body{font-family:Arial,sans-serif;background:#faf8f3;margin:0;padding:0;color:#222;}
+#hdr{background:#1a4a2e;padding:18px 16px;text-align:center;color:#c8a951;font-size:22px;}
+#hdr small{display:block;font-size:13px;color:#e8dcb0;margin-top:4px;letter-spacing:1px;text-transform:uppercase;}
+#login{display:flex;align-items:center;justify-content:center;padding:30px 16px;}
+#app{display:none;padding:16px;max-width:900px;margin:0 auto;}
+.card{background:#fff;border-radius:12px;padding:26px;max-width:380px;width:100%;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.1);}
+.card h2{color:#1a4a2e;margin:0 0 8px;}
+.card p{color:#666;font-size:13px;margin:0 0 18px;}
+select,input{width:100%;padding:10px;margin-bottom:12px;border:1px solid #ccc;border-radius:7px;font-size:15px;font-family:Arial,sans-serif;}
+.btn{width:100%;padding:12px;background:#1a4a2e;color:#c8a951;border:none;border-radius:7px;font-size:15px;font-weight:bold;cursor:pointer;}
+.btn:hover{background:#2d7a4f;}
+#pwdrow{display:none;}
+
+/* Event announcement */
+.event{background:#fff;border-left:6px solid #c8a951;border-radius:10px;padding:16px 20px;margin:0 0 16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+.event .lbl{font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#8aaa96;margin-bottom:6px;}
+.event .resto{font-size:22px;font-weight:bold;color:#1a4a2e;}
+.event .addr{font-size:14px;color:#4a6455;margin-top:2px;}
+.event .when{font-size:17px;color:#222;margin-top:8px;}
+.event .when strong{color:#1a4a2e;}
+.event.none{border-left-color:#ccc;color:#777;font-style:italic;}
+#card-event{margin-bottom:18px;text-align:left;}
+
+#toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;}
+#user-info{background:#fff;padding:8px 14px;border-radius:30px;font-size:13px;border:1px solid #ddd;}
+.tbtn{padding:7px 14px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer;font-size:13px;}
+#msg{background:#f0f7f4;border:1px solid #c8ddd2;color:#4a6455;padding:8px 14px;border-radius:7px;margin-bottom:12px;font-size:13px;min-height:36px;}
+#msg.ok{background:#e8f5ee;border-color:#2d7a4f;color:#0f6e56;}
+#msg.err{background:#fdf0f0;border-color:#a04040;color:#a04040;}
+#msg.saving{background:#fff8e1;border-color:#f0d060;color:#7a5d00;}
+.hint{font-size:13px;color:#4a6455;margin:0 0 10px;}
+
+#summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+#summary span{background:#fff;border:1px solid #ddd;border-radius:20px;padding:6px 12px;font-size:13px;}
+#summary .s-oui{border-color:#2d7a4f;color:#1a4a2e;font-weight:bold;}
+#summary .s-non{border-color:#a04040;color:#a04040;}
+
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+th{background:#1a4a2e;color:#fff;padding:10px 8px;font-size:12px;text-transform:uppercase;text-align:left;}
+th.c{text-align:center;}
+td{padding:8px;border-bottom:1px solid #eee;font-size:14px;}
+td.nom{font-weight:bold;padding-left:14px;}
+th:first-child{padding-left:14px;}
+td.c{text-align:center;}
+td.tel{font-size:13px;color:#555;white-space:nowrap;}
+td.mail a{font-size:13px;color:#2d7a4f;text-decoration:none;word-break:break-all;}
+tr:nth-child(even){background:#f7fbf9;}
+tr.mine{background:#fffbe8!important;}
+tr.mine td.nom{color:#8a6d00;}
+tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
+.cb{width:52px;height:36px;border:1px solid #ccc;border-radius:6px;background:#f5f5f5;color:#999;font-weight:bold;font-size:15px;}
+.cb.edit{cursor:pointer;border-color:#c8a951;box-shadow:0 0 0 2px #f3e7c2;}
+.cb.oui{background:#2d7a4f;border-color:#2d7a4f;color:#fff;}
+.cb.non{background:#f5e8e8;border-color:#a04040;color:#a04040;}
+.cb.ro{cursor:default;}
+
+#cap-panel{background:#fff;border-radius:10px;padding:16px 20px;margin-top:18px;box-shadow:0 2px 12px rgba(0,0,0,0.08);display:none;}
+#cap-panel h3{color:#1a4a2e;margin:0 0 12px;}
+.dh{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8aaa96;margin:16px 0 10px;padding-bottom:5px;border-bottom:1px solid #c8ddd2;}
+.dr{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+.dr label{font-size:13px;color:#4a6455;min-width:110px;}
+.dr input{flex:1;min-width:180px;margin-bottom:0;padding:8px 9px;}
+.abtn{padding:9px 16px;background:#1a4a2e;color:#c8a951;border:none;border-radius:6px;font-size:13px;font-weight:bold;cursor:pointer;margin:4px 8px 4px 0;}
+.abtn:hover{background:#2d7a4f;}
+.dbtn{padding:9px 16px;background:#fff;color:#a04040;border:1px solid #a04040;border-radius:6px;font-size:13px;cursor:pointer;margin:4px 8px 4px 0;}
+#cap-note{font-size:12px;color:#8aaa96;margin-top:6px;min-height:16px;}
+#mail-preview{width:100%;min-height:230px;font-family:Arial,sans-serif;font-size:13px;padding:10px;border:1px solid #c8ddd2;border-radius:7px;margin-top:8px;display:none;}
+
+@media (max-width:640px){
+  .col-mail{display:none;}
+  #hdr{font-size:19px;}
+  .event .resto{font-size:19px;}
+}
+</style>
+</head>
+<body>
+
+<div id="hdr">☕ Amis du Golf Cap-Rouge<small>Déjeuner mensuel</small></div>
+
+<div id="login">
+  <div class="card">
+    <div id="card-event" class="event none">Chargement du prochain déjeuner...</div>
+    <h2>Bienvenue</h2>
+    <p>Sélectionnez votre nom pour indiquer votre présence</p>
+    <select id="sel" disabled>
+      <option value="">Chargement des membres...</option>
+    </select>
+    <div id="pwdrow">
+      <input type="password" id="pwd" placeholder="Mot de passe capitaine">
+    </div>
+    <button class="btn" id="loginbtn" disabled>Accéder</button>
+  </div>
+</div>
+
+<div id="app">
+  <div id="toolbar">
+    <div id="user-info">👤 <span id="uname"></span></div>
+    <button class="tbtn" id="logoutbtn">← Changer</button>
+  </div>
+
+  <div id="event" class="event none"></div>
+
+  <div id="msg">Prêt</div>
+  <p class="hint" id="hint">Cliquez sur votre case : <strong>O</strong> = Oui (1<sup>er</sup> clic), <strong>N</strong> = Non (2<sup>e</sup> clic). Un 3<sup>e</sup> clic efface la réponse.</p>
+
+  <div id="summary"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>NOM</th>
+        <th class="c">PRÉSENCE</th>
+        <th>TÉLÉPHONE</th>
+        <th class="col-mail">COURRIEL</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <div id="cap-panel">
+    <h3>Panneau Capitaine</h3>
+
+    <div class="dh">📍 Prochain déjeuner</div>
+    <div class="dr"><label for="e-resto">Restaurant</label><input type="text" id="e-resto" placeholder="ex. Restaurant Normandin"></div>
+    <div class="dr"><label for="e-addr">Adresse</label><input type="text" id="e-addr" placeholder="(facultatif)"></div>
+    <div class="dr"><label for="e-date">Date</label><input type="date" id="e-date"></div>
+    <div class="dr"><label for="e-heure">Heure</label><input type="text" id="e-heure" placeholder="ex. 8h30"></div>
+    <button class="abtn" onclick="saveEvent()">✓ Enregistrer le déjeuner</button>
+    <div id="cap-note"></div>
+
+    <div class="dh">📧 Courriel aux membres</div>
+    <button class="abtn" onclick="openMail()">📧 Ouvrir dans mon courriel</button>
+    <button class="abtn" onclick="copyAddresses()">📋 Copier les adresses</button>
+    <button class="abtn" onclick="copyMessage()">📋 Copier le message</button>
+    <textarea id="mail-preview" readonly></textarea>
+
+    <div class="dh">🖨 Liste et réponses</div>
+    <button class="abtn" onclick="printList()">🖨 Imprimer la liste</button>
+    <button class="dbtn" onclick="clearResponses()">Effacer les réponses de ce déjeuner</button>
+  </div>
+</div>
+
+<script>
+// Same Google Apps Script as the golf app (index.html)
+var URL = 'https://script.google.com/macros/s/AKfycbzoghEqwRvBcRLcFxK71shdH17oJiwN7Hqi4KRuqpOytiBK8g4DrZLVDqM1hYcT5VCx9g/exec';
+var CAP_PWD = 'caprouge2026';
+var PAGE_URL = 'https://agcr1959.github.io/golf-caprouge/dejeuner.html';
+
+// Storage keys in the Google Sheet. Golf weeks use dates like 2026-10-26,
+// so these keys never mix with golf data.
+var CONFIG_KEY = 'DEJ-CONFIG';   // holds restaurant / adresse / date / heure
+var CONFIG_ROW = 'EVENEMENT';
+var DAY = 'PRESENCE';
+
+var user = null, isCap = false;
+var members = {};
+var event = {resto:'', addr:'', date:'', heure:''};
+var answers = {};          // name -> 'o' | 'n' | ''
+
+function g(id){ return document.getElementById(id); }
+
+// ── Helpers ──
+function isGuest(name){
+  return name.normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().indexOf('INVIT') === 0;
+}
+function memberNames(){
+  return Object.keys(members).filter(function(n){ return !isGuest(n); })
+    .sort(function(a,b){ return a.localeCompare(b,'fr'); });
+}
+function eventKey(){ return event.date ? 'DEJ-' + event.date : ''; }
+function frDate(iso){
+  if(!iso) return '';
+  var p = iso.split('-');
+  var d = new Date(+p[0], +p[1]-1, +p[2]);
+  return d.toLocaleDateString('fr-CA', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
+function cap(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+function showMsg(text, kind){
+  var m = g('msg');
+  m.textContent = text;
+  m.className = kind || '';
+  if(kind === 'ok'){
+    setTimeout(function(){ if(m.textContent === text){ m.textContent = 'Prêt'; m.className = ''; } }, 3000);
+  }
+}
+
+// ── JSONP call (same method as the golf app) ──
+function apiCall(params, ok, fail){
+  var cb = 'cb' + Date.now() + Math.floor(Math.random()*1000);
+  var s = document.createElement('script');
+  var done = false;
+  var t = setTimeout(function(){ finish(); if(fail) fail('Délai dépassé'); }, 12000);
+  function finish(){
+    done = true; clearTimeout(t); delete window[cb];
+    if(s.parentNode) s.parentNode.removeChild(s);
+  }
+  window[cb] = function(data){ if(done) return; finish(); if(ok) ok(data); };
+  s.onerror = function(){ if(done) return; finish(); if(fail) fail('Erreur réseau'); };
+  params.callback = cb;
+  var qs = [];
+  for(var k in params) qs.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+  s.src = URL + '?' + qs.join('&');
+  document.body.appendChild(s);
+}
+
+// ── Event display ──
+function renderEvent(el){
+  el.innerHTML = '';
+  if(!event.resto && !event.date){
+    el.className = 'event none';
+    el.textContent = 'Le prochain déjeuner n\'a pas encore été annoncé.';
+    return;
+  }
+  el.className = 'event';
+  var lbl = document.createElement('div'); lbl.className = 'lbl'; lbl.textContent = 'Prochain déjeuner';
+  var r = document.createElement('div'); r.className = 'resto'; r.textContent = event.resto || '(restaurant à confirmer)';
+  el.appendChild(lbl); el.appendChild(r);
+  if(event.addr){ var a = document.createElement('div'); a.className = 'addr'; a.textContent = event.addr; el.appendChild(a); }
+  var w = document.createElement('div'); w.className = 'when';
+  var b = document.createElement('strong'); b.textContent = cap(frDate(event.date)) || '(date à confirmer)';
+  w.appendChild(b);
+  if(event.heure) w.appendChild(document.createTextNode(' à ' + event.heure));
+  el.appendChild(w);
+}
+
+function loadEvent(done){
+  apiCall({action:'getWeek', week:CONFIG_KEY}, function(data){
+    var e = {resto:'', addr:'', date:'', heure:''};
+    if(data && data.rows){
+      data.rows.forEach(function(r){
+        if(r.member !== CONFIG_ROW) return;
+        if(r.day === 'RESTAURANT') e.resto = String(r.value || '');
+        if(r.day === 'ADRESSE')    e.addr  = String(r.value || '');
+        if(r.day === 'DATE')       e.date  = normDate(r.value);
+        if(r.day === 'HEURE')      e.heure = String(r.value || '');
+      });
+    }
+    event = e;
+    if(done) done();
+  }, function(err){
+    showMsg('Erreur de chargement: ' + err, 'err');
+    if(done) done();
+  });
+}
+
+// Google Sheets may turn "2026-11-20" into a real date; bring it back to YYYY-MM-DD
+function normDate(v){
+  if(!v) return '';
+  var s = String(v);
+  var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return m[1] + '-' + m[2] + '-' + m[3];
+  var d = new Date(s);
+  if(isNaN(d)) return '';
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// ── Members ──
+function loadMembers(done){
+  apiCall({action:'getMembers'}, function(data){
+    if(data && data.members && data.members !== 'null'){
+      try{ members = JSON.parse(data.members) || {}; }catch(e){ members = {}; }
+    }
+    if(done) done();
+  }, function(err){
+    showMsg('Erreur chargement membres: ' + err, 'err');
+    if(done) done();
+  });
+}
+
+function buildSelect(){
+  var sel = g('sel');
+  sel.innerHTML = '<option value="">— Choisissez votre nom —</option>';
+  memberNames().forEach(function(n){
+    var o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o);
+  });
+  var c = document.createElement('option'); c.value = '__CAP__'; c.textContent = 'Capitaine (accès complet)';
+  sel.appendChild(c);
+  sel.disabled = false;
+  g('loginbtn').disabled = false;
+}
+
+// ── Responses ──
+function loadAnswers(done){
+  answers = {};
+  if(!eventKey()){ if(done) done(); return; }
+  showMsg('Chargement...', 'saving');
+  apiCall({action:'getWeek', week:eventKey()}, function(data){
+    if(data && data.rows){
+      data.rows.forEach(function(r){ if(r.day === DAY) answers[r.member] = r.value; });
+    }
+    showMsg('Prêt', '');
+    if(done) done();
+  }, function(err){
+    showMsg('Erreur chargement: ' + err, 'err');
+    if(done) done();
+  });
+}
+
+function render(){
+  renderEvent(g('event'));
+  var noEvent = !eventKey();
+  g('hint').style.display = noEvent ? 'none' : 'block';
+
+  var tbody = g('tbody'); tbody.innerHTML = '';
+  var names = memberNames();
+  names.forEach(function(name){
+    var info = members[name] || {};
+    var isMe = !isCap && name === user;
+    var canEdit = !noEvent && (isCap || isMe);
+    var tr = document.createElement('tr'); if(isMe) tr.className = 'mine';
+
+    var td0 = document.createElement('td'); td0.className = 'nom'; td0.textContent = name; tr.appendChild(td0);
+
+    var td1 = document.createElement('td'); td1.className = 'c';
+    var btn = document.createElement('button');
+    paintBtn(btn, answers[name] || '');
+    if(canEdit){
+      btn.classList.add('edit');
+      btn.onclick = function(){ toggle(name, btn); };
+    } else {
+      btn.classList.add('ro'); btn.tabIndex = -1;
+    }
+    td1.appendChild(btn); tr.appendChild(td1);
+
+    var td2 = document.createElement('td'); td2.className = 'tel'; td2.textContent = info.tel || ''; tr.appendChild(td2);
+
+    var td3 = document.createElement('td'); td3.className = 'mail col-mail';
+    if(info.email){ var a = document.createElement('a'); a.href = 'mailto:' + info.email; a.textContent = info.email; td3.appendChild(a); }
+    tr.appendChild(td3);
+    tbody.appendChild(tr);
+  });
+
+  var tr = document.createElement('tr'); tr.className = 'total';
+  var t0 = document.createElement('td'); t0.className = 'nom'; t0.textContent = 'TOTAL OUI'; tr.appendChild(t0);
+  var t1 = document.createElement('td'); t1.className = 'c'; t1.id = 'total-oui'; tr.appendChild(t1);
+  var t2 = document.createElement('td'); tr.appendChild(t2);
+  var t3 = document.createElement('td'); t3.className = 'col-mail'; tr.appendChild(t3);
+  tbody.appendChild(tr);
+  updateCounts();
+}
+
+function paintBtn(btn, v){
+  btn.classList.remove('oui','non');
+  if(v === 'o'){ btn.classList.add('oui'); btn.textContent = 'O'; }
+  else if(v === 'n'){ btn.classList.add('non'); btn.textContent = 'N'; }
+  else btn.textContent = '·';
+  btn.classList.add('cb');
+}
+
+function updateCounts(){
+  var names = memberNames(), o = 0, n = 0;
+  names.forEach(function(x){ if(answers[x] === 'o') o++; else if(answers[x] === 'n') n++; });
+  var t = g('total-oui'); if(t) t.textContent = o;
+  var s = g('summary'); s.innerHTML = '';
+  if(!eventKey()) return;
+  [['s-oui','✅ ' + o + ' Oui'], ['s-non','❌ ' + n + ' Non'], ['','⏳ ' + (names.length - o - n) + ' sans réponse']]
+    .forEach(function(p){ var sp = document.createElement('span'); sp.className = p[0]; sp.textContent = p[1]; s.appendChild(sp); });
+}
+
+function toggle(name, btn){
+  var cur = answers[name] || '';
+  var nxt = cur === '' ? 'o' : cur === 'o' ? 'n' : '';
+  answers[name] = nxt;
+  paintBtn(btn, nxt);
+  updateCounts();
+  queueSave(name, nxt);
+}
+
+// Save queue: only the last click on a row is sent, never two at once for the same row
+var timers = {}, inFlight = {}, pending = {};
+function queueSave(name, value){
+  pending[name] = value;
+  showMsg('Sauvegarde...', 'saving');
+  clearTimeout(timers[name]);
+  timers[name] = setTimeout(function(){ flush(name); }, 600);
+}
+function flush(name){
+  if(inFlight[name]){ timers[name] = setTimeout(function(){ flush(name); }, 300); return; }
+  if(!(name in pending)) return;
+  var value = pending[name]; delete pending[name];
+  inFlight[name] = true;
+  apiCall({action:'setCell', week:eventKey(), member:name, day:DAY, value:value}, function(data){
+    inFlight[name] = false;
+    if(data && data.ok) showMsg('Sauvegarde OK', 'ok');
+    else showMsg('Erreur: ' + JSON.stringify(data), 'err');
+    if(name in pending) flush(name);
+  }, function(err){
+    inFlight[name] = false;
+    showMsg('Erreur de sauvegarde: ' + err, 'err');
+  });
+}
+
+// ── Captain ──
+function fillCapForm(){
+  g('e-resto').value = event.resto; g('e-addr').value = event.addr;
+  g('e-date').value = event.date;   g('e-heure').value = event.heure;
+  g('mail-preview').style.display = 'none';
+}
+
+function saveEvent(){
+  var e = {
+    resto: g('e-resto').value.trim(), addr: g('e-addr').value.trim(),
+    date: g('e-date').value, heure: g('e-heure').value.trim()
+  };
+  if(!e.resto || !e.date || !e.heure){
+    g('cap-note').textContent = 'Indiquez au moins le restaurant, la date et l\'heure.';
+    g('cap-note').style.color = '#a04040';
+    return;
+  }
+  var fields = [['RESTAURANT', e.resto], ['ADRESSE', e.addr], ['DATE', e.date], ['HEURE', e.heure]];
+  var left = fields.length, failed = false;
+  showMsg('Sauvegarde du déjeuner...', 'saving');
+  fields.forEach(function(f){
+    // Leading apostrophe makes Google Sheets keep the value as plain text
+    // (otherwise "8:30" becomes a time and "2026-11-20" a date). The script strips it when reading.
+    var v = f[1] ? "'" + f[1] : '';
+    apiCall({action:'setCell', week:CONFIG_KEY, member:CONFIG_ROW, day:f[0], value:v}, function(data){
+      if(!(data && data.ok)) failed = true;
+      if(--left === 0) afterSave();
+    }, function(){ failed = true; if(--left === 0) afterSave(); });
+  });
+  function afterSave(){
+    if(failed){ showMsg('Erreur: le déjeuner n\'a pas été entièrement enregistré.', 'err'); return; }
+    event = e;
+    g('cap-note').textContent = 'Déjeuner enregistré. Vous pouvez maintenant envoyer le courriel.';
+    g('cap-note').style.color = '#2d7a4f';
+    loadAnswers(render);
+  }
+}
+
+function mailSubject(){
+  return 'Amis du Golf Cap-Rouge — Déjeuner du ' + frDate(event.date);
+}
+function mailBody(){
+  var lines = [
+    'Bonjour,',
+    '',
+    'Notre prochain déjeuner mensuel aura lieu :',
+    '',
+    event.resto + (event.addr ? ' — ' + event.addr : ''),
+    cap(frDate(event.date)) + ' à ' + event.heure,
+    '',
+    'Merci d\'indiquer votre présence :',
+    '1. Cliquez sur ce lien : ' + PAGE_URL,
+    '2. Sélectionnez votre nom et cliquez sur Accéder',
+    '3. Cliquez sur votre case : O = Oui (1er clic), N = Non (2e clic)',
+    '4. Votre réponse est enregistrée automatiquement',
+    '',
+    'Au plaisir de vous voir!',
+    '',
+    'Jean Bussière',
+    'Capitaine — Amis du Golf Cap-Rouge'
+  ];
+  return lines.join('\n');
+}
+function emails(){
+  return memberNames().map(function(n){ return String((members[n] || {}).email || '').trim(); })
+    .filter(function(e){ return e.indexOf('@') > -1; });
+}
+function eventReady(){
+  if(!event.resto || !event.date){
+    alert('Enregistrez d\'abord le restaurant, la date et l\'heure.');
+    return false;
+  }
+  return true;
+}
+function showPreview(){
+  var p = g('mail-preview');
+  p.value = 'À (Cci) : ' + emails().join(', ') + '\n\nObjet : ' + mailSubject() + '\n\n' + mailBody();
+  p.style.display = 'block';
+}
+function openMail(){
+  if(!eventReady()) return;
+  showPreview();
+  window.location.href = 'mailto:?bcc=' + encodeURIComponent(emails().join(','))
+    + '&subject=' + encodeURIComponent(mailSubject())
+    + '&body=' + encodeURIComponent(mailBody());
+}
+function copyText(text, label){
+  function ok(){ g('cap-note').textContent = label + ' copié(es) — collez dans votre courriel.'; g('cap-note').style.color = '#2d7a4f'; }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(ok, function(){ fallbackCopy(text); ok(); });
+  } else { fallbackCopy(text); ok(); }
+}
+function fallbackCopy(text){
+  var t = document.createElement('textarea'); t.value = text; document.body.appendChild(t);
+  t.select(); try{ document.execCommand('copy'); }catch(e){} document.body.removeChild(t);
+}
+function copyAddresses(){ if(!eventReady()) return; showPreview(); copyText(emails().join(', '), 'Adresses'); }
+function copyMessage(){ if(!eventReady()) return; showPreview(); copyText(mailSubject() + '\n\n' + mailBody(), 'Message'); }
+
+function printList(){
+  var names = memberNames();
+  var o = names.filter(function(n){ return answers[n] === 'o'; });
+  var n = names.filter(function(x){ return answers[x] === 'n'; });
+  var r = names.filter(function(x){ return !answers[x]; });
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  var rows = names.map(function(name, i){
+    var v = answers[name] || '', info = members[name] || {};
+    var bg = v === 'o' ? '#2d7a4f' : v === 'n' ? '#f5e8e8' : '#fff', fg = v === 'o' ? '#fff' : v === 'n' ? '#a04040' : '#ccc';
+    return '<tr style="background:' + (i % 2 ? '#f7fbf9' : '#fff') + '"><td style="padding:7px 11px;border:1px solid #ddd;font-weight:bold;">' + esc(name) + '</td>'
+      + '<td style="text-align:center;border:1px solid #ddd;background:' + bg + ';color:' + fg + ';font-weight:bold;">' + (v === 'o' ? 'O' : v === 'n' ? 'N' : '') + '</td>'
+      + '<td style="padding:7px 10px;border:1px solid #ddd;font-size:12px;">' + esc(info.tel || '') + '</td></tr>';
+  }).join('');
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Déjeuner</title>'
+    + '<style>body{font-family:Arial,sans-serif;margin:22px;}table{border-collapse:collapse;width:100%;font-size:13px;}td,th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}</style></head><body>'
+    + '<h2 style="color:#1a4a2e;margin-bottom:3px;">AMIS DU GOLF CAP-ROUGE — DÉJEUNER</h2>'
+    + '<p style="font-size:14px;margin:0 0 12px;"><strong>' + esc(event.resto) + '</strong>' + (event.addr ? ' — ' + esc(event.addr) : '') + '<br>' + esc(cap(frDate(event.date))) + ' à ' + esc(event.heure) + '</p>'
+    + '<div style="background:#e8f5ee;border-left:4px solid #2d7a4f;padding:9px 14px;margin-bottom:14px;font-size:13px;">'
+    + '✅ Présents (' + o.length + ') : ' + (o.length ? esc(o.join(', ')) : 'Aucun') + '<br>'
+    + '❌ Absents (' + n.length + ') : ' + (n.length ? esc(n.join(', ')) : 'Aucun') + '<br>'
+    + '⏳ Sans réponse (' + r.length + ') : ' + (r.length ? esc(r.join(', ')) : 'Aucun') + '</div>'
+    + '<table><thead><tr><th style="background:#1a4a2e;color:#fff;padding:8px 11px;text-align:left;">NOM</th><th style="background:#1a4a2e;color:#fff;padding:8px;">PRÉSENCE</th><th style="background:#1a4a2e;color:#fff;padding:8px;text-align:left;">TÉLÉPHONE</th></tr></thead><tbody>'
+    + rows + '</tbody></table>'
+    + '<p style="font-size:11px;color:#aaa;margin-top:13px;">Imprimé le ' + new Date().toLocaleDateString('fr-CA') + '</p>'
+    + '<script>window.onload=function(){window.print();};<\/script></body></html>';
+  var w = window.open('', '_blank'); w.document.write(html); w.document.close();
+}
+
+function clearResponses(){
+  if(!eventKey()) return;
+  if(!confirm('Effacer toutes les réponses pour le déjeuner du ' + frDate(event.date) + ' ?')) return;
+  apiCall({action:'clearWeek', week:eventKey()}, function(){
+    answers = {}; render(); showMsg('Réponses effacées', 'ok');
+  }, function(err){ showMsg('Erreur: ' + err, 'err'); });
+}
+
+// ── Login ──
+g('sel').onchange = function(){ g('pwdrow').style.display = this.value === '__CAP__' ? 'block' : 'none'; };
+
+g('loginbtn').onclick = function(){
+  var v = g('sel').value;
+  if(!v){ alert('Choisissez votre nom'); return; }
+  if(v === '__CAP__'){
+    var saved = {}; try{ saved = JSON.parse(localStorage.getItem('golf_cfg') || '{}'); }catch(e){}
+    if(g('pwd').value !== (saved.pwd || CAP_PWD)){ alert('Mot de passe incorrect'); return; }
+    isCap = true; user = 'CAPITAINE';
+  } else { isCap = false; user = v; }
+  g('login').style.display = 'none';
+  g('app').style.display = 'block';
+  g('uname').textContent = user;
+  g('cap-panel').style.display = isCap ? 'block' : 'none';
+  if(isCap) fillCapForm();
+  render();
+  loadEvent(function(){ if(isCap) fillCapForm(); loadAnswers(render); });
+};
+
+g('logoutbtn').onclick = function(){
+  user = null; isCap = false;
+  g('app').style.display = 'none';
+  g('login').style.display = 'flex';
+  g('sel').value = ''; g('pwd').value = ''; g('pwdrow').style.display = 'none';
+  renderEvent(g('card-event'));
+};
+
+// ── Start ──
+loadMembers(buildSelect);
+loadEvent(function(){ renderEvent(g('card-event')); });
+</script>
+</body>
+</html>
