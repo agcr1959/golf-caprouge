@@ -18,6 +18,8 @@ select,input{width:100%;padding:10px;margin-bottom:12px;border:1px solid #ccc;bo
 .btn{width:100%;padding:12px;background:#1a4a2e;color:#c8a951;border:none;border-radius:7px;font-size:15px;font-weight:bold;cursor:pointer;}
 .btn:hover{background:#2d7a4f;}
 #pwdrow{display:none;}
+.golf-link{display:block;margin-top:14px;font-size:13px;color:#2d7a4f;text-decoration:none;}
+.golf-link:hover{text-decoration:underline;}
 
 /* Event announcement */
 .event{background:#fff;border-left:6px solid #c8a951;border-radius:10px;padding:16px 20px;margin:0 0 16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
@@ -97,13 +99,17 @@ tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
       <input type="password" id="pwd" placeholder="Mot de passe capitaine">
     </div>
     <button class="btn" id="loginbtn" disabled>Accéder</button>
+    <a class="golf-link" href="./">⛳ Aller à l'application golf</a>
   </div>
 </div>
 
 <div id="app">
   <div id="toolbar">
     <div id="user-info">👤 <span id="uname"></span></div>
-    <button class="tbtn" id="logoutbtn">← Changer</button>
+    <div>
+      <a class="tbtn" href="./" style="text-decoration:none;color:#222;display:inline-block;margin-right:6px;">⛳ Golf</a>
+      <button class="tbtn" id="logoutbtn">← Changer</button>
+    </div>
   </div>
 
   <div id="event" class="event none"></div>
@@ -133,6 +139,8 @@ tr.total td{background:#1a4a2e;color:#fff;font-weight:bold;}
     <div class="dr"><label for="e-addr">Adresse</label><input type="text" id="e-addr" placeholder="(facultatif)"></div>
     <div class="dr"><label for="e-date">Date</label><input type="date" id="e-date"></div>
     <div class="dr"><label for="e-heure">Heure</label><input type="text" id="e-heure" placeholder="ex. 8h30"></div>
+    <div class="dr"><label for="e-signom">Signé par</label><input type="text" id="e-signom" placeholder="ex. Alan Lamb"></div>
+    <div class="dr"><label for="e-sigtitre">Titre</label><input type="text" id="e-sigtitre" placeholder="ex. Votre G.O. hors-saison"></div>
     <button class="abtn" onclick="saveEvent()">✓ Enregistrer le déjeuner</button>
     <div id="cap-note"></div>
 
@@ -162,7 +170,9 @@ var DAY = 'PRESENCE';
 
 var user = null, isCap = false;
 var members = {};
-var event = {resto:'', addr:'', date:'', heure:''};
+var DEFAULT_SIGNOM = 'Alan Lamb';
+var DEFAULT_SIGTITRE = 'Votre G.O. hors-saison';
+var event = {resto:'', addr:'', date:'', heure:'', signom:'', sigtitre:''};
 var answers = {};          // name -> 'o' | 'n' | ''
 
 function g(id){ return document.getElementById(id); }
@@ -234,7 +244,7 @@ function renderEvent(el){
 
 function loadEvent(done){
   apiCall({action:'getWeek', week:CONFIG_KEY}, function(data){
-    var e = {resto:'', addr:'', date:'', heure:''};
+    var e = {resto:'', addr:'', date:'', heure:'', signom:'', sigtitre:''};
     if(data && data.rows){
       data.rows.forEach(function(r){
         if(r.member !== CONFIG_ROW) return;
@@ -242,6 +252,8 @@ function loadEvent(done){
         if(r.day === 'ADRESSE')    e.addr  = String(r.value || '');
         if(r.day === 'DATE')       e.date  = normDate(r.value);
         if(r.day === 'HEURE')      e.heure = String(r.value || '');
+        if(r.day === 'SIGNOM')     e.signom = String(r.value || '');
+        if(r.day === 'SIGTITRE')   e.sigtitre = String(r.value || '');
       });
     }
     event = e;
@@ -403,20 +415,23 @@ function flush(name){
 function fillCapForm(){
   g('e-resto').value = event.resto; g('e-addr').value = event.addr;
   g('e-date').value = event.date;   g('e-heure').value = event.heure;
+  g('e-signom').value = event.signom || DEFAULT_SIGNOM;
+  g('e-sigtitre').value = event.sigtitre || DEFAULT_SIGTITRE;
   g('mail-preview').style.display = 'none';
 }
 
 function saveEvent(){
   var e = {
     resto: g('e-resto').value.trim(), addr: g('e-addr').value.trim(),
-    date: g('e-date').value, heure: g('e-heure').value.trim()
+    date: g('e-date').value, heure: g('e-heure').value.trim(),
+    signom: g('e-signom').value.trim(), sigtitre: g('e-sigtitre').value.trim()
   };
   if(!e.resto || !e.date || !e.heure){
     g('cap-note').textContent = 'Indiquez au moins le restaurant, la date et l\'heure.';
     g('cap-note').style.color = '#a04040';
     return;
   }
-  var fields = [['RESTAURANT', e.resto], ['ADRESSE', e.addr], ['DATE', e.date], ['HEURE', e.heure]];
+  var fields = [['RESTAURANT', e.resto], ['ADRESSE', e.addr], ['DATE', e.date], ['HEURE', e.heure], ['SIGNOM', e.signom], ['SIGTITRE', e.sigtitre]];
   var left = fields.length, failed = false;
   showMsg('Sauvegarde du déjeuner...', 'saving');
   fields.forEach(function(f){
@@ -457,8 +472,8 @@ function mailBody(){
     '',
     'Au plaisir de vous voir!',
     '',
-    'Jean Bussière',
-    'Capitaine — Amis du Golf Cap-Rouge'
+    event.signom || DEFAULT_SIGNOM,
+    event.sigtitre || DEFAULT_SIGTITRE
   ];
   return lines.join('\n');
 }
