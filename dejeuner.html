@@ -181,9 +181,13 @@ function g(id){ return document.getElementById(id); }
 function isGuest(name){
   return name.normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().indexOf('INVIT') === 0;
 }
+// Everyone answers for breakfast, guests included (listed at the bottom, as in the golf app)
 function memberNames(){
-  return Object.keys(members).filter(function(n){ return !isGuest(n); })
-    .sort(function(a,b){ return a.localeCompare(b,'fr'); });
+  return Object.keys(members).sort(function(a,b){
+    var ga = isGuest(a), gb = isGuest(b);
+    if(ga !== gb) return ga ? 1 : -1;
+    return a.localeCompare(b,'fr');
+  });
 }
 function eventKey(){ return event.date ? 'DEJ-' + event.date : ''; }
 function frDate(iso){
