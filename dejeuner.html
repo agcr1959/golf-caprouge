@@ -566,7 +566,10 @@ g('loginbtn').onclick = function(){
   g('cap-panel').style.display = isCap ? 'block' : 'none';
   if(isCap) fillCapForm();
   render();
-  loadEvent(function(){ if(isCap) fillCapForm(); loadAnswers(render); });
+  lastMembersLoad = Date.now();
+  loadMembers(function(){
+    loadEvent(function(){ if(isCap) fillCapForm(); loadAnswers(render); });
+  });
 };
 
 g('logoutbtn').onclick = function(){
@@ -577,7 +580,36 @@ g('logoutbtn').onclick = function(){
   renderEvent(g('card-event'));
 };
 
+// ── Keep the member list fresh ──
+// Names added in the golf app must show up here without a manual reload,
+// including when the page is reopened from a home-screen icon.
+var lastMembersLoad = 0;
+function refreshMembers(force){
+  if(!force && Date.now() - lastMembersLoad < 5000) return;
+  lastMembersLoad = Date.now();
+  loadMembers(function(){
+    var sel = g('sel'), current = sel.value;
+    buildSelect();
+    sel.value = current;
+    if(g('app').style.display === 'block') render();
+  });
+}
+g('sel').addEventListener('mousedown', function(){ refreshMembers(false); });
+g('sel').addEventListener('touchstart', function(){ refreshMembers(false); }, {passive:true});
+g('sel').addEventListener('focus', function(){ refreshMembers(false); });
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'visible'){
+    refreshMembers(true);
+    loadEvent(function(){
+      renderEvent(g('card-event'));
+      if(g('app').style.display === 'block') loadAnswers(render);
+    });
+  }
+});
+window.addEventListener('pageshow', function(e){ if(e.persisted) refreshMembers(true); });
+
 // ── Start ──
+lastMembersLoad = Date.now();
 loadMembers(buildSelect);
 loadEvent(function(){ renderEvent(g('card-event')); });
 </script>
