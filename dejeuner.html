@@ -198,6 +198,16 @@ function frDate(iso){
 }
 function cap(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
+// "Chargement..." stays up until every load in progress has finished
+var busy = 0;
+function startLoading(){ busy++; showMsg('Chargement...', 'saving'); }
+function endLoading(){
+  busy = Math.max(0, busy - 1);
+  var m = g('msg');
+  if(busy === 0 && m.textContent === 'Chargement...') showMsg('Prêt', '');
+}
+var ready = true;   // false while the table's answers are still loading
+
 function showMsg(text, kind){
   var m = g('msg');
   m.textContent = text;
@@ -381,14 +391,15 @@ function buildSelect(){
 function loadAnswers(done){
   answers = {};
   if(!eventKey()){ if(done) done(); return; }
-  showMsg('Chargement...', 'saving');
+  startLoading();
   apiCall({action:'getWeek', week:eventKey()}, function(data){
     if(data && data.rows){
       data.rows.forEach(function(r){ if(r.day === DAY) answers[r.member] = r.value; });
     }
-    showMsg('Prêt', '');
+    endLoading();
     if(done) done();
   }, function(err){
+    busy = Math.max(0, busy - 1);
     showMsg('Erreur chargement: ' + err, 'err');
     if(done) done();
   });
@@ -404,7 +415,7 @@ function render(){
   names.forEach(function(name){
     var info = members[name] || {};
     var isMe = !isCap && name === user;
-    var canEdit = !noEvent && (isCap || isMe);
+    var canEdit = ready && !noEvent && (isCap || isMe);
     var tr = document.createElement('tr'); if(isMe) tr.className = 'mine';
 
     var td0 = document.createElement('td'); td0.className = 'nom'; td0.textContent = name; tr.appendChild(td0);
@@ -642,10 +653,22 @@ g('loginbtn').onclick = function(){
   g('uname').textContent = user;
   g('cap-panel').style.display = isCap ? 'block' : 'none';
   if(isCap) fillCapForm();
+  ready = false;
+  startLoading();
   render();
   lastMembersLoad = Date.now();
-  loadMembers(function(){
-    loadEvent(function(){ if(isCap) fillCapForm(); loadAnswers(render); });
+  // Names and breakfast details load at the same time; answers follow the details
+  var membersDone = false, answersDone = false;
+  function allDone(){
+    if(!membersDone || !answersDone) return;
+    ready = true;
+    render();
+    endLoading();
+  }
+  loadMembers(function(){ membersDone = true; allDone(); });
+  loadEvent(function(){
+    if(isCap) fillCapForm();
+    loadAnswers(function(){ answersDone = true; allDone(); });
   });
 };
 
