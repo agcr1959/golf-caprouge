@@ -207,31 +207,88 @@ function showMsg(text, kind){
   }
 }
 
-// ── JSONP call (same method as the golf app) ──
+// ── JSONP call to the Google Apps Script ──
+// Google Apps Script sometimes stalls on a request for 10+ seconds while the
+// same request a moment later answers in 2. So:
+//  - reads (getMembers, getWeek) send a fresh copy of the request every 8 s
+//    (up to 3 copies) and take whichever answer arrives first;
+//  - writes are sent once (a duplicate could land after a newer click),
+//    with a long 30 s wait.
+var READ_ACTIONS = {getMembers:1, getWeek:1};
+var cbSeq = 0;
 function apiCall(params, ok, fail){
-  var cb = 'cb' + Date.now() + Math.floor(Math.random()*1000);
-  var s = document.createElement('script');
-  var done = false;
-  var t = setTimeout(function(){ finish(); if(fail) fail('Délai dépassé'); }, 12000);
-  function finish(){
-    done = true; clearTimeout(t); delete window[cb];
-    if(s.parentNode) s.parentNode.removeChild(s);
+  var isRead = !!READ_ACTIONS[params.action];
+  var maxTries = isRead ? 3 : 1;
+  var retryEvery = 8000;
+  var giveUpAfter = 30000;
+  var settled = false, tries = 0, errors = 0, scripts = [], cbs = [], retryTimer = null;
+
+  function cleanup(){
+    clearTimeout(retryTimer); clearTimeout(giveUp);
+    scripts.forEach(function(s){ if(s.parentNode) s.parentNode.removeChild(s); });
+    // Leave a no-op behind so a late answer from an earlier copy doesn't throw
+    cbs.forEach(function(name){ window[name] = function(){}; });
   }
-  window[cb] = function(data){ if(done) return; finish(); if(ok) ok(data); };
-  s.onerror = function(){ if(done) return; finish(); if(fail) fail('Erreur réseau'); };
-  params.callback = cb;
-  var qs = [];
-  for(var k in params) qs.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
-  s.src = URL + '?' + qs.join('&');
-  document.body.appendChild(s);
+  function send(){
+    tries++;
+    var cb = 'cb' + Date.now() + '_' + (++cbSeq) + '_' + Math.floor(Math.random()*1e6);
+    cbs.push(cb);
+    var s = document.createElement('script');
+    scripts.push(s);
+    window[cb] = function(data){
+      if(settled) return;
+      settled = true; cleanup();
+      if(ok) ok(data);
+    };
+    s.onerror = function(){
+      if(settled) return;
+      errors++;
+      // A failed copy triggers the next one right away, if any are left
+      if(tries < maxTries){ clearTimeout(retryTimer); send(); return; }
+      // Every copy failed outright (no connection): say so now, don't wait
+      if(errors >= tries){
+        settled = true; cleanup();
+        if(fail) fail('Erreur réseau');
+      }
+    };
+    var p = {}; for(var k in params) p[k] = params[k];
+    p.callback = cb;
+    var qs = [];
+    for(var k2 in p) qs.push(encodeURIComponent(k2) + '=' + encodeURIComponent(p[k2]));
+    s.src = URL + '?' + qs.join('&');
+    document.body.appendChild(s);
+    if(tries < maxTries) retryTimer = setTimeout(send, retryEvery);
+  }
+  var giveUp = setTimeout(function(){
+    if(settled) return;
+    settled = true; cleanup();
+    if(fail) fail('Délai dépassé');
+  }, giveUpAfter);
+  send();
 }
 
+// ── Remember the last answers on this device (shown at once while Google is slow) ──
+function cacheGet(key){ try{ return JSON.parse(localStorage.getItem(key) || 'null'); }catch(e){ return null; } }
+function cacheSet(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+
 // ── Event display ──
+var eventLoaded = false, eventFailed = false;
 function renderEvent(el){
   el.innerHTML = '';
   if(!event.resto && !event.date){
     el.className = 'event none';
-    el.textContent = 'Le prochain déjeuner n\'a pas encore été annoncé.';
+    if(eventFailed){
+      el.appendChild(document.createTextNode('Connexion lente avec Google. '));
+      var a = document.createElement('a');
+      a.href = '#'; a.textContent = 'Réessayer';
+      a.style.color = '#2d7a4f'; a.style.fontStyle = 'normal'; a.style.fontWeight = 'bold';
+      a.onclick = function(ev){ ev.preventDefault(); retryAll(); };
+      el.appendChild(a);
+    } else if(!eventLoaded){
+      el.textContent = 'Chargement du prochain déjeuner...';
+    } else {
+      el.textContent = 'Le prochain déjeuner n\'a pas encore été annoncé.';
+    }
     return;
   }
   el.className = 'event';
@@ -261,10 +318,26 @@ function loadEvent(done){
       });
     }
     event = e;
+    eventLoaded = true; eventFailed = false;
+    cacheSet('dej_event', e);
     if(done) done();
   }, function(err){
-    showMsg('Erreur de chargement: ' + err, 'err');
+    // Keep whatever we had (from this device's memory) rather than blanking it
+    eventFailed = true;
+    showMsg('Connexion lente avec Google (' + err + '). Les informations affichées peuvent dater un peu.', 'err');
     if(done) done();
+  });
+}
+
+function retryAll(){
+  eventFailed = false;
+  renderEvent(g('card-event'));
+  if(g('app').style.display === 'block') renderEvent(g('event'));
+  showMsg('Nouvel essai...', 'saving');
+  refreshMembers(true);
+  loadEvent(function(){
+    renderEvent(g('card-event'));
+    if(g('app').style.display === 'block'){ if(isCap) fillCapForm(); loadAnswers(render); }
   });
 }
 
@@ -283,11 +356,11 @@ function normDate(v){
 function loadMembers(done){
   apiCall({action:'getMembers'}, function(data){
     if(data && data.members && data.members !== 'null'){
-      try{ members = JSON.parse(data.members) || {}; }catch(e){ members = {}; }
+      try{ members = JSON.parse(data.members) || {}; cacheSet('dej_members', members); }catch(e){}
     }
     if(done) done();
   }, function(err){
-    showMsg('Erreur chargement membres: ' + err, 'err');
+    showMsg('Connexion lente avec Google (' + err + '). Liste des membres possiblement incomplète.', 'err');
     if(done) done();
   });
 }
@@ -613,8 +686,22 @@ document.addEventListener('visibilitychange', function(){
 window.addEventListener('pageshow', function(e){ if(e.persisted) refreshMembers(true); });
 
 // ── Start ──
+// 1. Show what this device remembers right away
+var cachedMembers = cacheGet('dej_members');
+if(cachedMembers && typeof cachedMembers === 'object' && Object.keys(cachedMembers).length){
+  members = cachedMembers; buildSelect();
+}
+var cachedEvent = cacheGet('dej_event');
+if(cachedEvent && typeof cachedEvent === 'object'){
+  for(var ck in event) if(typeof cachedEvent[ck] === 'string') event[ck] = cachedEvent[ck];
+}
+renderEvent(g('card-event'));
+// 2. Then refresh both from Google
 lastMembersLoad = Date.now();
-loadMembers(buildSelect);
+loadMembers(function(){
+  var sel = g('sel'), current = sel.value;
+  buildSelect(); sel.value = current;
+});
 loadEvent(function(){ renderEvent(g('card-event')); });
 </script>
 </body>
